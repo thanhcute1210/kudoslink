@@ -2,6 +2,7 @@
 import Navbar from "@/components/ui/navbar"
 import { useStore } from "@/lib/store"
 import { useEffect } from "react"
+import { useAuthGuard } from "@/lib/useAuthGuard"
 
 const badgeColor: Record<string, string> = {
   Legend: "text-purple-700 bg-purple-50 ring-purple-100",
@@ -38,10 +39,12 @@ function getColor(index: number): string {
 }
 
 export default function LeaderboardPage() {
+  useAuthGuard()
   const { profiles, loadProfiles } = useStore()
 
   useEffect(() => {
     loadProfiles()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const sorted = [...profiles].sort((a, b) => b.points - a.points)
@@ -76,7 +79,7 @@ export default function LeaderboardPage() {
             </div>
             <div className="flex gap-3">
               <span className="rounded-full bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 ring-1 ring-amber-100">
-                May 2026
+                {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
               </span>
               <span className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 ring-1 ring-emerald-100">
                 All offices

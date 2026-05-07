@@ -115,7 +115,11 @@ export const useStore = create<Store>()((set, get) => ({
       .single()
 
     if (profile) {
-      set({ currentUser: profile, isLoggedIn: true })
+      set({
+        currentUser: profile,
+        isLoggedIn: true,
+        myBudget: profile.giving_budget_monthly ?? 300,
+      })
     }
   },
 
@@ -140,6 +144,10 @@ export const useStore = create<Store>()((set, get) => ({
   posts: [],
 
   loadPosts: async () => {
+    // Ensure company values are loaded so dbToPost can resolve them
+    if (get().companyValues.length === 0) {
+      await get().loadCompanyValues()
+    }
     const { companyValues } = get()
     const { data } = await supabase
       .from("posts")
@@ -163,7 +171,7 @@ export const useStore = create<Store>()((set, get) => ({
 
     if (!freshUser) return
 
-    const { data: newRow } = await supabase
+    const { data: newRow, error: insertError } = await supabase
       .from("posts")
       .insert({
         from_name: freshUser.full_name,
@@ -182,44 +190,46 @@ export const useStore = create<Store>()((set, get) => ({
       .select()
       .single()
 
-    if (newRow) {
-      const { companyValues } = get()
-      set({ posts: [dbToPost(newRow, companyValues), ...get().posts] })
+    if (!newRow || insertError) return
 
-      // Ghi point_transaction
-      const { profiles } = get()
-      const receiver = profiles.find(p => p.full_name === postData.to)
-      if (receiver) {
-        await supabase.from("point_transactions").insert({
-          from_user_id: freshUser.id,
-          to_user_id: receiver.id,
-          post_id: newRow.id,
-          company_value_id: postData.companyValueId || null,
-          points: postData.points,
-          transaction_type: "appreciation",
-        })
+    const { companyValues } = get()
+    set({ posts: [dbToPost(newRow, companyValues), ...get().posts] })
+
+    // Find receiver once for all subsequent operations
+    const receiverProfile = get().profiles.find(p => p.full_name === postData.to)
+
+    if (receiverProfile) {
+      await supabase.from("point_transactions").insert({
+        from_user_id: freshUser.id,
+        to_user_id: receiverProfile.id,
+        post_id: newRow.id,
+        company_value_id: postData.companyValueId || null,
+        points: postData.points,
+        transaction_type: "appreciation",
+      })
+
+      // Re-fetch receiver immediately before writing to shrink the race-condition window.
+      // True atomicity requires a DB-side RPC with increment — consider adding one later.
+      const { data: freshReceiver } = await supabase
+        .from("profiles")
+        .select("points, monthly_points")
+        .eq("id", receiverProfile.id)
+        .single()
+
+      if (freshReceiver) {
+        await supabase
+          .from("profiles")
+          .update({
+            points: freshReceiver.points + postData.points,
+            monthly_points: freshReceiver.monthly_points + postData.points,
+          })
+          .eq("id", receiverProfile.id)
       }
     }
 
-    // Cập nhật points người nhận
-    const { profiles } = get()
-    const receiver = profiles.find(p => p.full_name === postData.to)
-    if (receiver) {
-      await supabase
-        .from("profiles")
-        .update({
-          points: receiver.points + postData.points,
-          monthly_points: receiver.monthly_points + postData.points,
-        })
-        .eq("id", receiver.id)
-    }
-
-    // Cập nhật budget người gửi
     await supabase
       .from("profiles")
-      .update({
-        budget_used: (freshUser.budget_used || 0) + postData.points,
-      })
+      .update({ budget_used: (freshUser.budget_used || 0) + postData.points })
       .eq("id", freshUser.id)
 
     await get().loadUser()
