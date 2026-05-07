@@ -70,8 +70,8 @@ export default function FeedPage() {
     localStorage.setItem("kudoslink_reactions", JSON.stringify(next))
     setShowPicker(null)
     // pop animation
-    const key = `${postId}-${emoji}`
-    setPoppingReaction(key)
+    const popKey = `${postId}-${emoji}`
+    setPoppingReaction(popKey)
     setTimeout(() => setPoppingReaction(null), 400)
   }
 
