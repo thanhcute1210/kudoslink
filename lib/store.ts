@@ -11,6 +11,8 @@ export type Post = {
   toOffice: string
   points: number
   category: string
+  companyValueId?: string
+  companyValueTitle?: string
   time: string
   title: string
   message: string
@@ -21,13 +23,26 @@ export type Profile = {
   id: string
   full_name: string
   email: string
-  role: "employee" | "manager" | "admin"
+  role: "employee" | "manager" | "hr" | "admin"
   office: string
   department: string
+  position?: string
+  manager_id?: string
+  is_active?: boolean
   points: number
   monthly_points: number
   budget_used: number
+  giving_budget_monthly?: number
   avatar?: string
+}
+
+export type CompanyValue = {
+  id: string
+  title: string
+  description: string
+  icon: string
+  sort_order: number
+  is_active: boolean
 }
 
 type Store = {
@@ -45,6 +60,9 @@ type Store = {
   addReaction: (postId: number, emoji: string) => Promise<void>
   removeReaction: (postId: number, emoji: string) => Promise<void>
 
+  companyValues: CompanyValue[]
+  loadCompanyValues: () => Promise<void>
+
   myBudget: number
 }
 
@@ -59,7 +77,8 @@ function timeAgo(dateStr: string): string {
   return Math.floor(diff / 86400) + " days ago"
 }
 
-function dbToPost(row: any): Post {
+function dbToPost(row: any, values: CompanyValue[]): Post {
+  const value = values.find(v => v.id === row.company_value_id)
   return {
     id: row.id,
     from: row.from_name,
@@ -70,6 +89,8 @@ function dbToPost(row: any): Post {
     toOffice: row.to_office,
     points: row.points,
     category: row.category,
+    companyValueId: row.company_value_id,
+    companyValueTitle: value ? value.icon + " " + value.title : undefined,
     time: timeAgo(row.created_at),
     title: row.title,
     message: row.message,
@@ -119,13 +140,14 @@ export const useStore = create<Store>()((set, get) => ({
   posts: [],
 
   loadPosts: async () => {
+    const { companyValues } = get()
     const { data } = await supabase
       .from("posts")
       .select("*")
       .order("created_at", { ascending: false })
 
     if (data) {
-      set({ posts: data.map(dbToPost) })
+      set({ posts: data.map(row => dbToPost(row, companyValues)) })
     }
   },
 
@@ -141,7 +163,6 @@ export const useStore = create<Store>()((set, get) => ({
 
     if (!freshUser) return
 
-    // Lưu post vào Supabase
     const { data: newRow } = await supabase
       .from("posts")
       .insert({
@@ -155,13 +176,29 @@ export const useStore = create<Store>()((set, get) => ({
         category: postData.category,
         title: postData.title,
         message: postData.message,
+        company_value_id: postData.companyValueId || null,
         reactions: {},
       })
       .select()
       .single()
 
     if (newRow) {
-      set({ posts: [dbToPost(newRow), ...get().posts] })
+      const { companyValues } = get()
+      set({ posts: [dbToPost(newRow, companyValues), ...get().posts] })
+
+      // Ghi point_transaction
+      const { profiles } = get()
+      const receiver = profiles.find(p => p.full_name === postData.to)
+      if (receiver) {
+        await supabase.from("point_transactions").insert({
+          from_user_id: freshUser.id,
+          to_user_id: receiver.id,
+          post_id: newRow.id,
+          company_value_id: postData.companyValueId || null,
+          points: postData.points,
+          transaction_type: "appreciation",
+        })
+      }
     }
 
     // Cập nhật points người nhận
@@ -228,6 +265,20 @@ export const useStore = create<Store>()((set, get) => ({
         p.id === postId ? { ...p, reactions: newReactions } : p
       ),
     })
+  },
+
+  companyValues: [],
+
+  loadCompanyValues: async () => {
+    const { data } = await supabase
+      .from("company_values")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order")
+
+    if (data) {
+      set({ companyValues: data })
+    }
   },
 
   myBudget: 300,
