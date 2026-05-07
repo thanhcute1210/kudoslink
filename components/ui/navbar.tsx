@@ -1,9 +1,11 @@
 "use client"
 import { useEffect } from "react"
 import { useStore } from "@/lib/store"
+import { usePathname } from "next/navigation"
 
 export default function Navbar() {
   const { currentUser, logout, loadUser } = useStore()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!currentUser) loadUser()
@@ -15,24 +17,39 @@ export default function Navbar() {
     window.location.href = "/login"
   }
 
+  const navLinks = [
+    { href: "/feed", label: "News Feed" },
+    { href: "/leaderboard", label: "Dashboard" },
+    { href: "/dashboard", label: "My Page" },
+  ]
+
   return (
     <nav className="sticky top-0 z-20 border-b border-white/70 bg-white/80 shadow-sm backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <div>
-          <span className="text-xl font-bold tracking-tight text-blue-700">My OneValue</span>
-        </div>
+        <a href="/leaderboard" className="text-xl font-bold tracking-tight text-blue-700 hover:text-blue-800 transition-colors">
+          My OneValue
+        </a>
 
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <a href="/dashboard" className="rounded-full px-4 py-2 text-slate-600 hover:bg-white hover:shadow-sm">
-            My Page
-          </a>
-          <a href="/leaderboard" className="rounded-full px-4 py-2 text-slate-600 hover:bg-white hover:shadow-sm">
-            Dashboard
-          </a>
-          <a href="/feed" className="rounded-full px-4 py-2 text-slate-600 hover:bg-white hover:shadow-sm">
-            News Feed
-          </a>
-          <a href="/post" className="rounded-full bg-blue-600 px-4 py-2 text-white shadow-md hover:bg-blue-700">
+        <div className="flex items-center gap-1 text-sm font-medium">
+          {navLinks.map(({ href, label }) => {
+            const isActive = pathname === href
+            return (
+              <a
+                key={href}
+                href={href}
+                className={
+                  "rounded-full px-4 py-2 transition-all " +
+                  (isActive
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-200 font-bold"
+                    : "text-slate-600 hover:bg-blue-50 hover:text-blue-700")
+                }
+              >
+                {label}
+              </a>
+            )
+          })}
+
+          <a href="/post" className="rounded-full bg-blue-600 px-4 py-2 text-white shadow-md hover:bg-blue-700 ml-1">
             + Add Post
           </a>
 
