@@ -36,7 +36,13 @@ function getInitials(name: string): string {
 
 export default function FeedPage() {
   useAuthGuard()
-  const { posts, currentUser, addReaction, removeReaction, loadUser, loadProfiles, loadPosts } = useStore()
+  const {
+    posts, currentUser, addReaction, removeReaction,
+    loadUser, loadProfiles, loadPosts, loadMorePosts,
+    postsHasMore, postsLoading,
+    subscribeRealtime, unsubscribeRealtime,
+    newPostsAvailable, dismissNewPosts,
+  } = useStore()
   const [myReactions, setMyReactions] = useState<Record<string, string[]>>({})
   const [showPicker, setShowPicker] = useState<number | null>(null)
   const [toast, setToast] = useState("")
@@ -49,7 +55,9 @@ export default function FeedPage() {
     if (saved) {
       try { setMyReactions(JSON.parse(saved)) } catch {}
     }
-    Promise.all([loadUser(), loadProfiles(), loadPosts()]).finally(() => setIsLoading(false))
+    Promise.all([loadUser(), loadProfiles(), loadPosts(true)]).finally(() => setIsLoading(false))
+    subscribeRealtime()
+    return () => unsubscribeRealtime()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -201,6 +209,18 @@ export default function FeedPage() {
           </div>
         )}
 
+        {/* Real-time new posts banner */}
+        {newPostsAvailable && (
+          <button
+            onClick={() => { loadPosts(true); dismissNewPosts() }}
+            className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 animate-fade-in-up hover:bg-blue-700 transition"
+          >
+            <span className="animate-bounce">✨</span>
+            New appreciations posted! Click to refresh
+            <span className="animate-bounce">✨</span>
+          </button>
+        )}
+
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           {/* Posts list */}
           <div className="space-y-5">
@@ -321,6 +341,31 @@ export default function FeedPage() {
                 </article>
               )
             })}
+            {/* Load more button */}
+            {postsHasMore && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={loadMorePosts}
+                  disabled={postsLoading}
+                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 shadow-sm transition hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 disabled:opacity-50"
+                >
+                  {postsLoading ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>↓ Load more posts</>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {!postsHasMore && posts.length > 0 && (
+              <p className="pt-2 text-center text-xs text-slate-400">
+                All {posts.length} posts loaded ✓
+              </p>
+            )}
           </div>
 
           {/* Sidebar */}

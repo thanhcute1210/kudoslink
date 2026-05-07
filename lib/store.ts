@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { supabase } from "./supabase"
 import { avatarColor } from "./utils"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 
 export type Post = {
   id: number
@@ -46,6 +47,8 @@ export type CompanyValue = {
   is_active: boolean
 }
 
+const PAGE_SIZE = 20
+
 type Store = {
   currentUser: Profile | null
   isLoggedIn: boolean
@@ -56,7 +59,10 @@ type Store = {
   loadProfiles: () => Promise<void>
 
   posts: Post[]
-  loadPosts: () => Promise<void>
+  postsHasMore: boolean
+  postsLoading: boolean
+  loadPosts: (reset?: boolean) => Promise<void>
+  loadMorePosts: () => Promise<void>
   addPost: (post: Omit<Post, "id" | "time" | "reactions">) => Promise<void>
   addReaction: (postId: number, emoji: string) => Promise<void>
   removeReaction: (postId: number, emoji: string) => Promise<void>
@@ -65,6 +71,13 @@ type Store = {
   loadCompanyValues: () => Promise<void>
 
   myBudget: number
+
+  // Real-time
+  realtimeChannel: RealtimeChannel | null
+  newPostsAvailable: boolean
+  subscribeRealtime: () => void
+  unsubscribeRealtime: () => void
+  dismissNewPosts: () => void
 }
 
 function timeAgo(dateStr: string): string {
@@ -125,6 +138,7 @@ export const useStore = create<Store>()((set, get) => ({
   },
 
   logout: async () => {
+    get().unsubscribeRealtime()
     await supabase.auth.signOut()
     set({ currentUser: null, isLoggedIn: false })
   },
@@ -137,27 +151,42 @@ export const useStore = create<Store>()((set, get) => ({
       .select("*")
       .order("points", { ascending: false })
 
-    if (data) {
-      set({ profiles: data })
-    }
+    if (data) set({ profiles: data })
   },
 
   posts: [],
+  postsHasMore: true,
+  postsLoading: false,
 
-  loadPosts: async () => {
-    // Ensure company values are loaded so dbToPost can resolve them
-    if (get().companyValues.length === 0) {
-      await get().loadCompanyValues()
-    }
+  loadPosts: async (reset = true) => {
+    if (get().companyValues.length === 0) await get().loadCompanyValues()
     const { companyValues } = get()
+
+    const from = reset ? 0 : get().posts.length
+    const to = from + PAGE_SIZE - 1
+
+    set({ postsLoading: true })
+
     const { data } = await supabase
       .from("posts")
       .select("*")
       .order("created_at", { ascending: false })
+      .range(from, to)
+
+    set({ postsLoading: false })
 
     if (data) {
-      set({ posts: data.map(row => dbToPost(row, companyValues)) })
+      const newPosts = data.map(row => dbToPost(row, companyValues))
+      set({
+        posts: reset ? newPosts : [...get().posts, ...newPosts],
+        postsHasMore: data.length === PAGE_SIZE,
+      })
     }
+  },
+
+  loadMorePosts: async () => {
+    if (get().postsLoading || !get().postsHasMore) return
+    await get().loadPosts(false)
   },
 
   addPost: async (postData) => {
@@ -194,9 +223,10 @@ export const useStore = create<Store>()((set, get) => ({
     if (!newRow || insertError) return
 
     const { companyValues } = get()
+    // Real-time will handle adding to feed for other users
+    // For sender: add immediately to top
     set({ posts: [dbToPost(newRow, companyValues), ...get().posts] })
 
-    // Find receiver once for all subsequent operations
     const receiverProfile = get().profiles.find(p => p.full_name === postData.to)
 
     if (receiverProfile) {
@@ -209,8 +239,6 @@ export const useStore = create<Store>()((set, get) => ({
         transaction_type: "appreciation",
       })
 
-      // Re-fetch receiver immediately before writing to shrink the race-condition window.
-      // True atomicity requires a DB-side RPC with increment — consider adding one later.
       const { data: freshReceiver } = await supabase
         .from("profiles")
         .select("points, monthly_points")
@@ -240,42 +268,19 @@ export const useStore = create<Store>()((set, get) => ({
   addReaction: async (postId, emoji) => {
     const post = get().posts.find(p => p.id === postId)
     if (!post) return
-
-    const newReactions = {
-      ...post.reactions,
-      [emoji]: (post.reactions[emoji] || 0) + 1,
-    }
-
-    await supabase
-      .from("posts")
-      .update({ reactions: newReactions })
-      .eq("id", postId)
-
-    set({
-      posts: get().posts.map(p =>
-        p.id === postId ? { ...p, reactions: newReactions } : p
-      ),
-    })
+    const newReactions = { ...post.reactions, [emoji]: (post.reactions[emoji] || 0) + 1 }
+    await supabase.from("posts").update({ reactions: newReactions }).eq("id", postId)
+    set({ posts: get().posts.map(p => p.id === postId ? { ...p, reactions: newReactions } : p) })
   },
 
   removeReaction: async (postId, emoji) => {
     const post = get().posts.find(p => p.id === postId)
     if (!post) return
-
     const newReactions = { ...post.reactions }
     newReactions[emoji] = Math.max(0, (newReactions[emoji] || 0) - 1)
     if (newReactions[emoji] === 0) delete newReactions[emoji]
-
-    await supabase
-      .from("posts")
-      .update({ reactions: newReactions })
-      .eq("id", postId)
-
-    set({
-      posts: get().posts.map(p =>
-        p.id === postId ? { ...p, reactions: newReactions } : p
-      ),
-    })
+    await supabase.from("posts").update({ reactions: newReactions }).eq("id", postId)
+    set({ posts: get().posts.map(p => p.id === postId ? { ...p, reactions: newReactions } : p) })
   },
 
   companyValues: [],
@@ -286,11 +291,62 @@ export const useStore = create<Store>()((set, get) => ({
       .select("*")
       .eq("is_active", true)
       .order("sort_order")
-
-    if (data) {
-      set({ companyValues: data })
-    }
+    if (data) set({ companyValues: data })
   },
 
   myBudget: 300,
+
+  // ─── Real-time ────────────────────────────────────────────────────────────
+  realtimeChannel: null,
+  newPostsAvailable: false,
+
+  subscribeRealtime: () => {
+    // Avoid duplicate subscriptions
+    if (get().realtimeChannel) return
+
+    const channel = supabase
+      .channel("feed-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "posts" },
+        async (payload) => {
+          const { companyValues, currentUser, posts } = get()
+          if (companyValues.length === 0) await get().loadCompanyValues()
+
+          const newPost = dbToPost(payload.new, get().companyValues)
+
+          // If it's my own post — already added optimistically, skip
+          if (newPost.from === currentUser?.full_name) return
+
+          // If this post is already visible at top of feed — show banner
+          const alreadyLoaded = posts.some(p => p.id === newPost.id)
+          if (!alreadyLoaded) {
+            set({ newPostsAvailable: true })
+          }
+
+          // Also refresh profiles so leaderboard stays accurate
+          get().loadProfiles()
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles" },
+        () => {
+          get().loadProfiles()
+        }
+      )
+      .subscribe()
+
+    set({ realtimeChannel: channel })
+  },
+
+  unsubscribeRealtime: () => {
+    const ch = get().realtimeChannel
+    if (ch) {
+      supabase.removeChannel(ch)
+      set({ realtimeChannel: null })
+    }
+  },
+
+  dismissNewPosts: () => set({ newPostsAvailable: false }),
 }))
