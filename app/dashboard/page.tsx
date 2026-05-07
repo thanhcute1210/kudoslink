@@ -1,16 +1,18 @@
 "use client"
 import Navbar from "@/components/ui/navbar"
 import { useStore } from "@/lib/store"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { useAuthGuard } from "@/lib/useAuthGuard"
 
 export default function DashboardPage() {
-const { currentUser, profiles, posts, loadUser, loadProfiles, loadPosts, myBudget } = useStore()
+  useAuthGuard()
+  const { currentUser, profiles, posts, loadUser, loadProfiles, loadPosts, myBudget } = useStore()
+  const [isLoading, setIsLoading] = useState(true)
 
-useEffect(() => {
-  loadUser()
-  loadProfiles()
-  loadPosts()
-}, [])
+  useEffect(() => {
+    Promise.all([loadUser(), loadProfiles(), loadPosts()]).finally(() => setIsLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const recentPosts = posts.slice(0, 3)
   const top5 = [...profiles].sort((a, b) => b.points - a.points).slice(0, 5)
@@ -31,6 +33,17 @@ useEffect(() => {
 
   function getInitials(name: string): string {
     return name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()
+  }
+
+  if (isLoading) {
+    return (
+      <div className="relative min-h-screen bg-[radial-gradient(circle_at_top_left,#DBEAFE_0,#F8FAFC_32%,#FFFFFF_68%)]">
+        <Navbar />
+        <div className="flex items-center justify-center py-40">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+        </div>
+      </div>
+    )
   }
 
   return (

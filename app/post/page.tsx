@@ -3,6 +3,7 @@ import Navbar from "@/components/ui/navbar"
 import { useState, useEffect } from "react"
 import { useStore } from "@/lib/store"
 import { useRouter } from "next/navigation"
+import { useAuthGuard } from "@/lib/useAuthGuard"
 
 const categories = [
   "M&A", "Market Research", "Fast Support", "Translation",
@@ -11,6 +12,7 @@ const categories = [
 const pointOptions = [10, 20, 30, 50, 100]
 
 export default function PostPage() {
+  useAuthGuard()
   const { profiles, loadProfiles, loadUser, addPost, currentUser, myBudget, companyValues, loadCompanyValues } = useStore()
   const router = useRouter()
   const remaining = myBudget - (currentUser?.budget_used || 0)
@@ -29,6 +31,7 @@ export default function PostPage() {
     loadUser()
     loadProfiles()
     loadCompanyValues()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function handleSubmit() {

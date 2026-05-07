@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react"
 import { useStore } from "@/lib/store"
 import Navbar from "@/components/ui/navbar"
+import { useAuthGuard } from "@/lib/useAuthGuard"
 
 const categoryColor: Record<string, string> = {
   "M&A Support": "bg-blue-50 text-blue-700 ring-blue-100",
@@ -18,30 +19,49 @@ const categoryColor: Record<string, string> = {
 const ALL_REACTIONS = ["👏", "🔥", "⭐", "❤️", "💪", "🎨"]
 
 export default function FeedPage() {
- const { posts, addReaction, removeReaction, loadUser, loadProfiles, loadPosts } = useStore()
+  useAuthGuard()
+  const { posts, addReaction, removeReaction, loadUser, loadProfiles, loadPosts } = useStore()
   const [myReactions, setMyReactions] = useState<Record<string, string[]>>({})
   const [showPicker, setShowPicker] = useState<number | null>(null)
   const [toast, setToast] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-  loadUser()
-  loadProfiles()
-  loadPosts()
-}, [])
+    const saved = localStorage.getItem("kudoslink_reactions")
+    if (saved) {
+      try { setMyReactions(JSON.parse(saved)) } catch {}
+    }
+    Promise.all([loadUser(), loadProfiles(), loadPosts()]).finally(() => setIsLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function handleReact(postId: number, emoji: string) {
     const key = String(postId)
     const already = myReactions[key] || []
+    let next: Record<string, string[]>
     if (already.includes(emoji)) {
       removeReaction(postId, emoji)
-      setMyReactions({ ...myReactions, [key]: already.filter(e => e !== emoji) })
+      next = { ...myReactions, [key]: already.filter(e => e !== emoji) }
     } else {
       addReaction(postId, emoji)
-      setMyReactions({ ...myReactions, [key]: [...already, emoji] })
+      next = { ...myReactions, [key]: [...already, emoji] }
       setToast("Reaction added!")
       setTimeout(() => setToast(""), 2000)
     }
+    setMyReactions(next)
+    localStorage.setItem("kudoslink_reactions", JSON.stringify(next))
     setShowPicker(null)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="relative min-h-screen bg-[radial-gradient(circle_at_top_left,#DBEAFE_0,#F8FAFC_34%,#FFFFFF_70%)]">
+        <Navbar />
+        <div className="flex items-center justify-center py-40">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+        </div>
+      </div>
+    )
   }
 
   return (
