@@ -1,7 +1,7 @@
 "use client"
 import Navbar from "@/components/ui/navbar"
 import { useStore } from "@/lib/store"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useAuthGuard } from "@/lib/useAuthGuard"
 
 const badgeColor: Record<string, string> = {
@@ -38,17 +38,21 @@ function getColor(index: number): string {
   return colors[index % colors.length]
 }
 
+type OfficeFilter = "All" | "Japan" | "Vietnam"
+
 export default function LeaderboardPage() {
   useAuthGuard()
-  const { profiles, loadProfiles } = useStore()
+  const { profiles, loadProfiles, posts, loadPosts, currentUser, loadUser } = useStore()
+  const [filterOffice, setFilterOffice] = useState<OfficeFilter>("All")
 
   useEffect(() => {
-    loadProfiles()
+    Promise.all([loadUser(), loadProfiles(), loadPosts()])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const sorted = [...profiles].sort((a, b) => b.points - a.points)
   const top3 = sorted.slice(0, 3)
+  const filtered = filterOffice === "All" ? sorted : sorted.filter(p => p.office === filterOffice)
   const totalMonthly = profiles.reduce((a, p) => a + p.monthly_points, 0)
 
   return (
@@ -63,6 +67,7 @@ export default function LeaderboardPage() {
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-6xl px-6 py-8">
+        {/* Header */}
         <div className="relative mb-8 overflow-hidden rounded-[2rem] border border-white/70 bg-white/75 p-7 shadow-xl shadow-blue-100/50 backdrop-blur-xl">
           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-200/50 blur-2xl" />
           <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-end">
@@ -74,25 +79,23 @@ export default function LeaderboardPage() {
                 Recognition Dashboard
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                Live ranking updated from Supabase in real time.
+                Live ranking updated in real time.
               </p>
             </div>
             <div className="flex gap-3">
               <span className="rounded-full bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 ring-1 ring-amber-100">
                 {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
               </span>
-              <span className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 ring-1 ring-emerald-100">
-                All offices
-              </span>
             </div>
           </div>
         </div>
 
+        {/* Stats */}
         <div className="mb-8 grid gap-4 md:grid-cols-3">
           {[
-            { label: "Top Score", value: sorted[0] ? sorted[0].points.toLocaleString() + " pts" : "-", sub: sorted[0] ? sorted[0].full_name + " · " + sorted[0].office : "-", icon: "🏆" },
+            { label: "Total Appreciations", value: posts.length.toString(), sub: "All time posts", icon: "💌" },
             { label: "Points This Month", value: "+" + totalMonthly.toLocaleString(), sub: "Total distributed", icon: "📈" },
-            { label: "Active Members", value: profiles.length.toString(), sub: "Japan x Vietnam", icon: "🤝" },
+            { label: "Active Members", value: profiles.length.toString(), sub: "Japan × Vietnam", icon: "🤝" },
           ].map((item) => (
             <div key={item.label} className="rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5">
               <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 text-xl ring-1 ring-blue-100">
@@ -105,6 +108,7 @@ export default function LeaderboardPage() {
           ))}
         </div>
 
+        {/* Podium top 3 — always all offices */}
         {top3.length >= 1 && (
           <div className="mb-8 grid gap-4 md:grid-cols-3">
             {[top3[1], top3[0], top3[2]].map((e, i) => e && (
@@ -128,45 +132,88 @@ export default function LeaderboardPage() {
           </div>
         )}
 
+        {/* Full Ranking Table */}
         <section className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 shadow-xl backdrop-blur-xl">
-          <div className="relative border-b border-slate-100 px-6 py-5">
-            <h2 className="text-lg font-bold text-slate-950">Full Ranking</h2>
-            <p className="mt-1 text-sm text-slate-500">Live from Supabase</p>
+          <div className="relative flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-slate-950">Full Ranking</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                {filterOffice === "All" ? `${sorted.length} members` : `${filtered.length} members · ${filterOffice} office`}
+              </p>
+            </div>
+            {/* Office filter */}
+            <div className="flex gap-2">
+              {(["All", "Japan", "Vietnam"] as OfficeFilter[]).map((o) => (
+                <button
+                  key={o}
+                  onClick={() => setFilterOffice(o)}
+                  className={"rounded-full px-4 py-1.5 text-xs font-bold ring-1 transition " + (
+                    filterOffice === o
+                      ? "bg-blue-600 text-white ring-blue-600 shadow-sm"
+                      : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50 hover:text-blue-700"
+                  )}
+                >
+                  {o}
+                </button>
+              ))}
+            </div>
           </div>
+
           <div className="relative overflow-x-auto">
-            <div className="grid min-w-[640px] grid-cols-6 border-b border-slate-100 px-6 py-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+            <div className="grid min-w-[680px] grid-cols-7 border-b border-slate-100 px-6 py-3 text-xs font-bold uppercase tracking-wide text-slate-400">
               <div>Rank</div>
               <div className="col-span-2">Employee</div>
               <div>Office</div>
+              <div>Badge</div>
               <div>Monthly</div>
               <div>Total pts</div>
             </div>
-            {sorted.length === 0 && (
+
+            {filtered.length === 0 && (
               <div className="px-6 py-8 text-center text-sm text-slate-400">Loading...</div>
             )}
-            {sorted.map((e, index) => (
-              <div key={e.id} className="grid min-w-[640px] grid-cols-6 items-center border-b border-slate-100 px-6 py-4 transition last:border-0 hover:bg-blue-50/50">
-                <div className={"text-sm font-bold " + (index === 0 ? "text-amber-600" : index === 1 ? "text-slate-500" : index === 2 ? "text-orange-600" : "text-slate-400")}>
-                  #{index + 1}
-                </div>
-                <div className="col-span-2 flex items-center gap-3">
-                  <div className={"flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white shadow-sm " + getColor(index)}>
-                    {getInitials(e.full_name)}
+
+            {filtered.map((e, index) => {
+              const isMe = e.id === currentUser?.id
+              return (
+                <div
+                  key={e.id}
+                  className={"grid min-w-[680px] grid-cols-7 items-center border-b border-slate-100 px-6 py-4 transition last:border-0 " + (
+                    isMe ? "bg-blue-50/70 hover:bg-blue-50" : "hover:bg-blue-50/40"
+                  )}
+                >
+                  <div className={"text-sm font-bold " + (index === 0 ? "text-amber-600" : index === 1 ? "text-slate-500" : index === 2 ? "text-orange-600" : "text-slate-400")}>
+                    #{index + 1}
+                  </div>
+                  <div className="col-span-2 flex items-center gap-3">
+                    <div className={"flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white shadow-sm " + getColor(index)}>
+                      {getInitials(e.full_name)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-950">{e.full_name}</span>
+                        {isMe && (
+                          <span className="rounded-full bg-blue-600 px-2 py-0.5 text-xs font-bold text-white">You</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-500">{e.department}</div>
+                    </div>
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-950">{e.full_name}</div>
-                    <div className="text-xs text-slate-500">{e.department}</div>
+                    <span className={"rounded-full px-2.5 py-1 text-xs font-bold ring-1 " + (e.office === "Japan" ? "bg-red-50 text-red-700 ring-red-100" : "bg-emerald-50 text-emerald-700 ring-emerald-100")}>
+                      {e.office}
+                    </span>
                   </div>
+                  <div>
+                    <span className={"rounded-full px-2.5 py-1 text-xs font-bold ring-1 " + badgeColor[getBadge(e.points)]}>
+                      {getBadge(e.points)}
+                    </span>
+                  </div>
+                  <div className="text-sm font-bold text-emerald-600">+{e.monthly_points}</div>
+                  <div className="font-bold text-blue-700">{e.points.toLocaleString()}</div>
                 </div>
-                <div>
-                  <span className={"rounded-full px-2.5 py-1 text-xs font-bold ring-1 " + (e.office === "Japan" ? "bg-red-50 text-red-700 ring-red-100" : "bg-emerald-50 text-emerald-700 ring-emerald-100")}>
-                    {e.office}
-                  </span>
-                </div>
-                <div className="text-sm font-bold text-emerald-600">+{e.monthly_points}</div>
-                <div className="font-bold text-blue-700">{e.points.toLocaleString()}</div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </section>
       </main>

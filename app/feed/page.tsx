@@ -18,13 +18,18 @@ const categoryColor: Record<string, string> = {
 
 const ALL_REACTIONS = ["👏", "🔥", "⭐", "❤️", "💪", "🎨"]
 
+function getInitials(name: string): string {
+  return name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()
+}
+
 export default function FeedPage() {
   useAuthGuard()
-  const { posts, addReaction, removeReaction, loadUser, loadProfiles, loadPosts } = useStore()
+  const { posts, currentUser, addReaction, removeReaction, loadUser, loadProfiles, loadPosts } = useStore()
   const [myReactions, setMyReactions] = useState<Record<string, string[]>>({})
   const [showPicker, setShowPicker] = useState<number | null>(null)
   const [toast, setToast] = useState("")
   const [isLoading, setIsLoading] = useState(true)
+  const [filterCategory, setFilterCategory] = useState("")
 
   useEffect(() => {
     const saved = localStorage.getItem("kudoslink_reactions")
@@ -52,6 +57,32 @@ export default function FeedPage() {
     localStorage.setItem("kudoslink_reactions", JSON.stringify(next))
     setShowPicker(null)
   }
+
+  // Sidebar: top 3 receivers by points this month
+  const receiverPoints: Record<string, { points: number; office: string }> = {}
+  for (const p of posts) {
+    if (!receiverPoints[p.to]) receiverPoints[p.to] = { points: 0, office: p.toOffice }
+    receiverPoints[p.to].points += p.points
+  }
+  const top3Receivers = Object.entries(receiverPoints)
+    .sort((a, b) => b[1].points - a[1].points)
+    .slice(0, 3)
+
+  // Sidebar: category breakdown
+  const categoryCounts: Record<string, number> = {}
+  for (const p of posts) {
+    categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1
+  }
+  const topCategories = Object.entries(categoryCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+  const maxCount = topCategories[0]?.[1] || 1
+
+  // All unique categories for filter bar
+  const allCategories = Object.keys(categoryCounts).sort()
+
+  // Filtered posts
+  const filteredPosts = filterCategory ? posts.filter(p => p.category === filterCategory) : posts
 
   if (isLoading) {
     return (
@@ -82,7 +113,8 @@ export default function FeedPage() {
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-6xl px-6 py-8">
-        <div className="relative mb-8 overflow-hidden rounded-[2rem] border border-white/70 bg-white/75 p-7 shadow-xl shadow-blue-100/50 backdrop-blur-xl">
+        {/* Header */}
+        <div className="relative mb-6 overflow-hidden rounded-[2rem] border border-white/70 bg-white/75 p-7 shadow-xl shadow-blue-100/50 backdrop-blur-xl">
           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-200/50 blur-2xl" />
           <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
@@ -102,22 +134,66 @@ export default function FeedPage() {
           </div>
         </div>
 
+        {/* Category filter bar */}
+        {allCategories.length > 0 && (
+          <div className="mb-6 flex flex-wrap gap-2">
+            <button
+              onClick={() => setFilterCategory("")}
+              className={"rounded-full px-4 py-2 text-xs font-bold ring-1 transition " + (
+                filterCategory === ""
+                  ? "bg-slate-900 text-white ring-slate-900"
+                  : "bg-white text-slate-600 ring-slate-200 hover:bg-slate-50"
+              )}
+            >
+              All ({posts.length})
+            </button>
+            {allCategories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setFilterCategory(filterCategory === cat ? "" : cat)}
+                className={"rounded-full px-4 py-2 text-xs font-bold ring-1 transition " + (
+                  filterCategory === cat
+                    ? "bg-blue-600 text-white ring-blue-600"
+                    : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50 hover:text-blue-700"
+                )}
+              >
+                {cat} ({categoryCounts[cat]})
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          {/* Posts list */}
           <div className="space-y-5">
-            {posts.length === 0 && (
+            {filteredPosts.length === 0 && (
               <div className="rounded-[2rem] border border-white/80 bg-white/85 p-12 text-center shadow-xl backdrop-blur-xl">
                 <div className="text-4xl mb-4">🎉</div>
-                <p className="text-slate-500 text-sm">No posts yet. Be the first to appreciate someone!</p>
+                <p className="text-slate-500 text-sm">
+                  {filterCategory ? `No posts in "${filterCategory}" yet.` : "No posts yet. Be the first to appreciate someone!"}
+                </p>
                 <a href="/post" className="mt-4 inline-flex rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700">
                   + Add Post
                 </a>
               </div>
             )}
-            {posts.map((p) => {
+
+            {filteredPosts.map((p) => {
               const myR = myReactions[String(p.id)] || []
+              const isForMe = p.to === currentUser?.full_name
               return (
-                <article key={p.id} className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-6 shadow-xl backdrop-blur-xl transition hover:-translate-y-0.5">
-                  <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-blue-100/60 blur-3xl" />
+                <article
+                  key={p.id}
+                  className={"relative overflow-hidden rounded-[2rem] border bg-white/85 p-6 shadow-xl backdrop-blur-xl transition hover:-translate-y-0.5 " + (
+                    isForMe ? "border-blue-200 shadow-blue-100/60" : "border-white/80"
+                  )}
+                >
+                  {isForMe && (
+                    <div className="absolute right-4 top-4 rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
+                      For you ✨
+                    </div>
+                  )}
+                  <div className={"absolute -right-20 -top-20 h-48 w-48 rounded-full blur-3xl " + (isForMe ? "bg-blue-200/60" : "bg-blue-100/60")} />
                   <div className="relative">
                     <div className="mb-4 flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3">
@@ -128,7 +204,7 @@ export default function FeedPage() {
                           <div className="text-sm leading-6">
                             <span className="font-bold text-slate-950">{p.from}</span>
                             <span className="mx-2 text-slate-400">→</span>
-                            <span className="font-bold text-slate-950">{p.to}</span>
+                            <span className={"font-bold " + (isForMe ? "text-blue-700" : "text-slate-950")}>{p.to}</span>
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                             <span className="rounded-full bg-slate-50 px-2.5 py-1 ring-1 ring-slate-200">{p.fromOffice}</span>
@@ -147,10 +223,15 @@ export default function FeedPage() {
                     <h3 className="text-lg font-bold tracking-tight text-slate-950">{p.title}</h3>
                     <p className="mt-2 text-sm leading-6 text-slate-600">{p.message}</p>
 
-                    <div className="mt-4">
+                    <div className="mt-4 flex flex-wrap gap-2">
                       <span className={"rounded-full px-3 py-1 text-xs font-bold ring-1 " + (categoryColor[p.category] || "bg-slate-50 text-slate-600 ring-slate-200")}>
                         {p.category}
                       </span>
+                      {p.companyValueTitle && (
+                        <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 ring-1 ring-purple-100">
+                          {p.companyValueTitle}
+                        </span>
+                      )}
                     </div>
 
                     <div className="relative mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
@@ -188,7 +269,9 @@ export default function FeedPage() {
             })}
           </div>
 
+          {/* Sidebar */}
           <aside className="space-y-4">
+            {/* Feed Summary */}
             <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-xl backdrop-blur-xl">
               <h2 className="text-base font-bold text-slate-950">Feed Summary</h2>
               <p className="mt-1 text-sm text-slate-500">Recognition activity</p>
@@ -208,12 +291,59 @@ export default function FeedPage() {
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-xl backdrop-blur-xl">
-              <h2 className="text-base font-bold text-slate-950">Culture Tip</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Specific appreciation is stronger than generic praise. Mention the task, the impact, and why it helped the team.
-              </p>
-            </div>
+            {/* Top 3 Receivers */}
+            {top3Receivers.length > 0 && (
+              <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-xl backdrop-blur-xl">
+                <h2 className="text-base font-bold text-slate-950">Top Receivers</h2>
+                <p className="mt-1 text-sm text-slate-500">Most appreciated members</p>
+                <div className="mt-4 space-y-3">
+                  {top3Receivers.map(([name, data], i) => (
+                    <div key={name} className="flex items-center gap-3">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 text-xs font-bold text-white">
+                        {getInitials(name)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-slate-900 truncate">{name}</span>
+                          <span className="ml-2 shrink-0 text-xs font-bold text-amber-600">+{data.points}pts</span>
+                        </div>
+                        <div className="text-xs text-slate-400">{data.office}</div>
+                      </div>
+                      <div className="shrink-0 text-base">{i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Category Breakdown */}
+            {topCategories.length > 0 && (
+              <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-xl backdrop-blur-xl">
+                <h2 className="text-base font-bold text-slate-950">Top Categories</h2>
+                <p className="mt-1 text-sm text-slate-500">Most used appreciation types</p>
+                <div className="mt-4 space-y-3">
+                  {topCategories.map(([cat, count]) => (
+                    <div key={cat}>
+                      <div className="mb-1 flex items-center justify-between text-xs">
+                        <button
+                          onClick={() => setFilterCategory(filterCategory === cat ? "" : cat)}
+                          className={"font-semibold transition hover:text-blue-600 " + (filterCategory === cat ? "text-blue-600" : "text-slate-700")}
+                        >
+                          {cat}
+                        </button>
+                        <span className="text-slate-400">{count}</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className="h-1.5 rounded-full bg-blue-400 transition-all"
+                          style={{ width: (count / maxCount) * 100 + "%" }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </aside>
         </div>
       </main>
