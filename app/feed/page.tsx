@@ -219,59 +219,76 @@ export default function FeedPage() {
             {filteredPosts.map((p) => {
               const myR = myReactions[String(p.id)] || []
               const isForMe = p.to === currentUser?.full_name
+              const toInitials = p.to.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()
               return (
                 <article
                   key={p.id}
-                  className={"animate-fade-in-up relative overflow-hidden rounded-[2rem] border-l-4 border border-white/80 bg-white/90 p-6 shadow-xl backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-2xl " + (categoryBorder[p.category] || "border-l-slate-300") + (isForMe ? " ring-2 ring-blue-200 shadow-blue-100/60" : "")}
+                  className={"animate-fade-in-up relative overflow-hidden rounded-[2rem] border-l-4 border border-white/80 bg-white/90 shadow-xl backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-2xl " + (categoryBorder[p.category] || "border-l-slate-300") + (isForMe ? " ring-2 ring-blue-200 shadow-blue-100/60" : "")}
                   style={{ animationDelay: `${filteredPosts.indexOf(p) * 60}ms` }}
                 >
-                  {isForMe && (
-                    <div className="absolute right-4 top-4 rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
-                      For you ✨
-                    </div>
-                  )}
-                  <div className={"absolute -right-20 -top-20 h-48 w-48 rounded-full blur-3xl " + (isForMe ? "bg-blue-200/60" : "bg-blue-100/60")} />
-                  <div className="relative">
-                    <div className="mb-4 flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-sm " + p.fromColor}>
-                          {p.fromAvatar}
+                  {/* Background blob */}
+                  <div className={"absolute -right-20 -top-20 h-52 w-52 rounded-full blur-3xl " + (isForMe ? "bg-blue-200/50" : "bg-slate-100/80")} />
+
+                  {/* Top: points badge strip */}
+                  <div className={"flex items-center justify-between px-6 pt-5 pb-4 " + (isForMe ? "bg-gradient-to-r from-blue-50/60 to-transparent" : "")}>
+                    <div className="flex items-center gap-3">
+                      {/* From avatar */}
+                      <div className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-md " + p.fromColor}>
+                        {p.fromAvatar}
+                      </div>
+                      {/* Arrow + to avatar */}
+                      <div className="flex items-center gap-2">
+                        <div>
+                          <div className="text-sm font-bold text-slate-900 leading-tight">{p.from}</div>
+                          <div className="text-xs text-slate-400">{p.fromOffice}</div>
+                        </div>
+                        <span className="text-slate-300 text-lg mx-1">→</span>
+                        <div className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-md " + (isForMe ? "bg-gradient-to-br from-blue-500 to-indigo-500" : "bg-gradient-to-br from-slate-400 to-slate-500")}>
+                          {toInitials}
                         </div>
                         <div>
-                          <div className="text-sm leading-6">
-                            <span className="font-bold text-slate-950">{p.from}</span>
-                            <span className="mx-2 text-slate-400">→</span>
-                            <span className={"font-bold " + (isForMe ? "text-blue-700" : "text-slate-950")}>{p.to}</span>
-                          </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                            <span className="rounded-full bg-slate-50 px-2.5 py-1 ring-1 ring-slate-200">{p.fromOffice}</span>
-                            <span className="text-slate-300">to</span>
-                            <span className="rounded-full bg-slate-50 px-2.5 py-1 ring-1 ring-slate-200">{p.toOffice}</span>
-                            <span className="text-slate-300">·</span>
-                            <span>{p.time}</span>
-                          </div>
+                          <div className={"text-sm font-bold leading-tight " + (isForMe ? "text-blue-700" : "text-slate-900")}>{p.to}</div>
+                          <div className="text-xs text-slate-400">{p.toOffice}</div>
                         </div>
                       </div>
-                      <div className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-700 ring-1 ring-amber-200">
+                    </div>
+                    {/* Points + For you badge */}
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <div className="rounded-full bg-gradient-to-r from-amber-400 to-orange-400 px-4 py-1.5 text-sm font-bold text-white shadow-md shadow-amber-100">
                         +{p.points} pts
                       </div>
+                      {isForMe && (
+                        <span className="rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-bold text-white">For you ✨</span>
+                      )}
                     </div>
+                  </div>
 
-                    <h3 className="text-lg font-bold tracking-tight text-slate-950">{p.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{p.message}</p>
+                  {/* Body */}
+                  <div className="relative px-6 pb-5">
+                    <h3 className="text-base font-bold tracking-tight text-slate-950">{p.title}</h3>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    {/* Message as quote */}
+                    <blockquote className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
+                      <p className="text-sm leading-6 text-slate-600 before:content-['“'] before:text-slate-300 before:text-lg before:font-serif after:content-['”'] after:text-slate-300 after:text-lg after:font-serif">
+                        {p.message}
+                      </p>
+                    </blockquote>
+
+                    {/* Tags row */}
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
                       <span className={"rounded-full px-3 py-1 text-xs font-bold ring-1 " + (categoryColor[p.category] || "bg-slate-50 text-slate-600 ring-slate-200")}>
                         {p.category}
                       </span>
                       {p.companyValueTitle && (
-                        <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 ring-1 ring-purple-100">
+                        <span className="rounded-full bg-gradient-to-r from-purple-50 to-violet-50 px-3 py-1 text-xs font-bold text-purple-700 ring-1 ring-purple-200">
                           {p.companyValueTitle}
                         </span>
                       )}
+                      <span className="ml-auto text-xs text-slate-400">{p.time}</span>
                     </div>
 
-                    <div className="relative mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+                    {/* Reactions */}
+                    <div className="relative mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                       {Object.entries(p.reactions).map(([emoji, count]) => (
                         <button
                           key={emoji}
@@ -285,9 +302,9 @@ export default function FeedPage() {
                       <div className="relative">
                         <button
                           onClick={() => setShowPicker(showPicker === p.id ? null : p.id)}
-                          className="flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1.5 text-sm font-semibold text-slate-500 ring-1 ring-slate-200 hover:bg-white"
+                          className="flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500 ring-1 ring-slate-200 hover:bg-white hover:text-slate-700"
                         >
-                          + React
+                          <span>+</span> React
                         </button>
                         {showPicker === p.id && (
                           <div className="absolute bottom-10 left-0 z-30 flex gap-1 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl">
