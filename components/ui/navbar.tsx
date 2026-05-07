@@ -19,8 +19,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-20 border-b border-white/70 bg-white/80 shadow-sm backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <div>
-          <span className="text-xl font-bold tracking-tight text-blue-700">KudosLink</span>
-          <span className="ml-2 text-sm font-medium text-slate-500">JP x VN Office</span>
+          <span className="text-xl font-bold tracking-tight text-blue-700">My OneValue</span>
         </div>
 
         <div className="flex items-center gap-2 text-sm font-medium">

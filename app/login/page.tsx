@@ -47,9 +47,9 @@ export default function LoginPage() {
         <div className="relative">
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-2xl font-bold text-white shadow-lg">
-              K
+              M
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950">KudosLink</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-950">My OneValue</h1>
             <p className="mt-1 text-sm font-medium text-slate-500">JP × VN Office</p>
           </div>
 

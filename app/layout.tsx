@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KudosLink",
+  title: "My OneValue",
   description: "Recognize your teammates across JP × VN offices",
 };
 
