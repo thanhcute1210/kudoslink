@@ -1,8 +1,14 @@
 "use client"
+import { useEffect } from "react"
 import { useStore } from "@/lib/store"
 
 export default function Navbar() {
-  const { currentUser, logout } = useStore()
+  const { currentUser, logout, loadUser } = useStore()
+
+  useEffect(() => {
+    if (!currentUser) loadUser()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleLogout() {
     await logout()
@@ -18,8 +24,11 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2 text-sm font-medium">
+          <a href="/mypage" className="rounded-full px-4 py-2 text-slate-600 hover:bg-white hover:shadow-sm">
+            My Page
+          </a>
           <a href="/dashboard" className="rounded-full px-4 py-2 text-slate-600 hover:bg-white hover:shadow-sm">
-            My Profile
+            My Stats
           </a>
           <a href="/leaderboard" className="rounded-full px-4 py-2 text-slate-600 hover:bg-white hover:shadow-sm">
             Dashboard
