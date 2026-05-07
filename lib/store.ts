@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { supabase } from "./supabase"
+import { avatarColor } from "./utils"
 
 export type Post = {
   id: number
@@ -84,7 +85,7 @@ function dbToPost(row: any, values: CompanyValue[]): Post {
     from: row.from_name,
     fromOffice: row.from_office,
     fromAvatar: row.from_avatar,
-    fromColor: row.from_color,
+    fromColor: avatarColor(row.from_name),
     to: row.to_name,
     toOffice: row.to_office,
     points: row.points,

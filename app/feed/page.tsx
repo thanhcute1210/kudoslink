@@ -5,15 +5,27 @@ import Navbar from "@/components/ui/navbar"
 import { useAuthGuard } from "@/lib/useAuthGuard"
 
 const categoryColor: Record<string, string> = {
-  "M&A Support": "bg-blue-50 text-blue-700 ring-blue-100",
-  "Translation": "bg-emerald-50 text-emerald-700 ring-emerald-100",
-  "Creativity": "bg-pink-50 text-pink-700 ring-pink-100",
-  "Fast Support": "bg-amber-50 text-amber-700 ring-amber-100",
-  "M&A": "bg-blue-50 text-blue-700 ring-blue-100",
-  "Market Research": "bg-purple-50 text-purple-700 ring-purple-100",
-  "Leadership": "bg-indigo-50 text-indigo-700 ring-indigo-100",
-  "Sales Support": "bg-orange-50 text-orange-700 ring-orange-100",
-  "Operations": "bg-teal-50 text-teal-700 ring-teal-100",
+  "M&A Support":    "bg-blue-50 text-blue-700 ring-blue-100",
+  "Translation":    "bg-emerald-50 text-emerald-700 ring-emerald-100",
+  "Creativity":     "bg-pink-50 text-pink-700 ring-pink-100",
+  "Fast Support":   "bg-amber-50 text-amber-700 ring-amber-100",
+  "M&A":            "bg-blue-50 text-blue-700 ring-blue-100",
+  "Market Research":"bg-purple-50 text-purple-700 ring-purple-100",
+  "Leadership":     "bg-indigo-50 text-indigo-700 ring-indigo-100",
+  "Sales Support":  "bg-orange-50 text-orange-700 ring-orange-100",
+  "Operations":     "bg-teal-50 text-teal-700 ring-teal-100",
+}
+
+const categoryBorder: Record<string, string> = {
+  "M&A Support":    "border-l-blue-400",
+  "Translation":    "border-l-emerald-400",
+  "Creativity":     "border-l-pink-400",
+  "Fast Support":   "border-l-amber-400",
+  "M&A":            "border-l-blue-400",
+  "Market Research":"border-l-purple-400",
+  "Leadership":     "border-l-indigo-400",
+  "Sales Support":  "border-l-orange-400",
+  "Operations":     "border-l-teal-400",
 }
 
 const ALL_REACTIONS = ["👏", "🔥", "⭐", "❤️", "💪", "🎨"]
@@ -30,6 +42,7 @@ export default function FeedPage() {
   const [toast, setToast] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [filterCategory, setFilterCategory] = useState("")
+  const [poppingReaction, setPoppingReaction] = useState<string | null>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem("kudoslink_reactions")
@@ -56,6 +69,10 @@ export default function FeedPage() {
     setMyReactions(next)
     localStorage.setItem("kudoslink_reactions", JSON.stringify(next))
     setShowPicker(null)
+    // pop animation
+    const key = `${postId}-${emoji}`
+    setPoppingReaction(key)
+    setTimeout(() => setPoppingReaction(null), 400)
   }
 
   // Sidebar: top 3 receivers by points this month
@@ -96,12 +113,13 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#DBEAFE_0,#F8FAFC_34%,#FFFFFF_70%)] text-slate-900">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-50 text-slate-900">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-28 left-10 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
-        <div className="absolute top-40 right-0 h-80 w-80 rounded-full bg-emerald-200/30 blur-3xl" />
-        <div className="absolute bottom-10 left-1/3 h-72 w-72 rounded-full bg-amber-200/30 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#CBD5E1_1px,transparent_1px),linear-gradient(to_bottom,#CBD5E1_1px,transparent_1px)] bg-[size:56px_56px] opacity-[0.16]" />
+        <div className="absolute -top-28 left-10 h-80 w-80 rounded-full bg-blue-300/50 blur-3xl" />
+        <div className="absolute top-40 right-0 h-96 w-96 rounded-full bg-emerald-300/35 blur-3xl" />
+        <div className="absolute bottom-10 left-1/3 h-80 w-80 rounded-full bg-violet-300/30 blur-3xl" />
+        <div className="absolute bottom-40 right-1/4 h-64 w-64 rounded-full bg-amber-300/30 blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#CBD5E1_1px,transparent_1px),linear-gradient(to_bottom,#CBD5E1_1px,transparent_1px)] bg-[size:56px_56px] opacity-[0.08]" />
       </div>
 
       {toast && (
@@ -204,9 +222,8 @@ export default function FeedPage() {
               return (
                 <article
                   key={p.id}
-                  className={"relative overflow-hidden rounded-[2rem] border bg-white/85 p-6 shadow-xl backdrop-blur-xl transition hover:-translate-y-0.5 " + (
-                    isForMe ? "border-blue-200 shadow-blue-100/60" : "border-white/80"
-                  )}
+                  className={"animate-fade-in-up relative overflow-hidden rounded-[2rem] border-l-4 border border-white/80 bg-white/90 p-6 shadow-xl backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-2xl " + (categoryBorder[p.category] || "border-l-slate-300") + (isForMe ? " ring-2 ring-blue-200 shadow-blue-100/60" : "")}
+                  style={{ animationDelay: `${filteredPosts.indexOf(p) * 60}ms` }}
                 >
                   {isForMe && (
                     <div className="absolute right-4 top-4 rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
@@ -259,7 +276,7 @@ export default function FeedPage() {
                         <button
                           key={emoji}
                           onClick={() => handleReact(p.id, emoji)}
-                          className={"flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition " + (myR.includes(emoji) ? "bg-blue-100 text-blue-700 ring-blue-200" : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50")}
+                          className={"flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition " + (myR.includes(emoji) ? "bg-blue-100 text-blue-700 ring-blue-200" : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50") + (poppingReaction === `${p.id}-${emoji}` ? " animate-reaction-pop" : "")}
                         >
                           <span>{emoji}</span>
                           <span>{count}</span>

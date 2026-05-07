@@ -3,6 +3,7 @@ import Navbar from "@/components/ui/navbar"
 import { useStore } from "@/lib/store"
 import { useEffect, useState } from "react"
 import { useAuthGuard } from "@/lib/useAuthGuard"
+import { useCountUp } from "@/lib/useCountUp"
 
 const badgeColor: Record<string, string> = {
   Legend: "text-purple-700 bg-purple-50 ring-purple-100",
@@ -54,14 +55,20 @@ export default function LeaderboardPage() {
   const top3 = sorted.slice(0, 3)
   const filtered = filterOffice === "All" ? sorted : sorted.filter(p => p.office === filterOffice)
   const totalMonthly = profiles.reduce((a, p) => a + p.monthly_points, 0)
+  const totalPoints = posts.reduce((a, p) => a + p.points, 0)
+
+  const animatedPosts = useCountUp(posts.length)
+  const animatedMonthly = useCountUp(totalMonthly)
+  const animatedMembers = useCountUp(profiles.length)
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#DBEAFE_0,#F8FAFC_34%,#FFFFFF_70%)] text-slate-900">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-50 text-slate-900">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-28 left-10 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
-        <div className="absolute top-40 right-0 h-80 w-80 rounded-full bg-emerald-200/30 blur-3xl" />
-        <div className="absolute bottom-10 left-1/3 h-72 w-72 rounded-full bg-amber-200/30 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#CBD5E1_1px,transparent_1px),linear-gradient(to_bottom,#CBD5E1_1px,transparent_1px)] bg-[size:56px_56px] opacity-[0.16]" />
+        <div className="absolute -top-28 left-10 h-80 w-80 rounded-full bg-blue-300/50 blur-3xl" />
+        <div className="absolute top-40 right-0 h-96 w-96 rounded-full bg-emerald-300/35 blur-3xl" />
+        <div className="absolute bottom-10 left-1/3 h-80 w-80 rounded-full bg-amber-300/35 blur-3xl" />
+        <div className="absolute bottom-40 right-10 h-64 w-64 rounded-full bg-violet-300/25 blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#CBD5E1_1px,transparent_1px),linear-gradient(to_bottom,#CBD5E1_1px,transparent_1px)] bg-[size:56px_56px] opacity-[0.08]" />
       </div>
 
       <Navbar />
@@ -116,9 +123,9 @@ export default function LeaderboardPage() {
         {/* Stats */}
         <div className="mb-8 grid gap-4 md:grid-cols-3">
           {[
-            { label: "Total Appreciations", value: posts.length.toString(), sub: "All time posts", icon: "💌" },
-            { label: "Points This Month", value: "+" + totalMonthly.toLocaleString(), sub: "Total distributed", icon: "📈" },
-            { label: "Active Members", value: profiles.length.toString(), sub: "Japan × Vietnam", icon: "🤝" },
+            { label: "Total Appreciations", value: animatedPosts.toString(), sub: `${totalPoints.toLocaleString()} pts total`, icon: "💌" },
+            { label: "Points This Month", value: "+" + animatedMonthly.toLocaleString(), sub: "Distributed this month", icon: "📈" },
+            { label: "Active Members", value: animatedMembers.toString(), sub: "Japan × Vietnam", icon: "🤝" },
           ].map((item) => (
             <div key={item.label} className="rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5">
               <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 text-xl ring-1 ring-blue-100">
