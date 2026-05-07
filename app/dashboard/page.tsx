@@ -14,10 +14,12 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const recentPosts = posts.slice(0, 3)
-  const top5 = [...profiles].sort((a, b) => b.points - a.points).slice(0, 5)
   const myRank = [...profiles].sort((a, b) => b.points - a.points).findIndex(p => p.id === currentUser?.id) + 1
   const budgetLeft = myBudget - (currentUser?.budget_used || 0)
+  const budgetPercent = Math.min(((currentUser?.budget_used || 0) / myBudget) * 100, 100)
+
+  const postsReceived = posts.filter(p => p.to === currentUser?.full_name)
+  const postsSent = posts.filter(p => p.from === currentUser?.full_name)
 
   function getColor(index: number): string {
     const colors = [
@@ -58,11 +60,12 @@ export default function DashboardPage() {
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-6xl px-6 py-8">
-        {/* Hero - My Profile */}
+
+        {/* Hero - My Profile (no duplicate stats here) */}
         <div className="relative mb-8 overflow-hidden rounded-[2rem] border border-white/70 bg-white/75 p-7 shadow-xl shadow-blue-100/50 backdrop-blur-xl">
           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-200/50 blur-2xl" />
           <div className="relative flex items-center gap-6">
-            <div className={"flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br text-2xl font-bold text-white shadow-lg " + getColor(myRank)}>
+            <div className={"flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-2xl font-bold text-white shadow-lg " + getColor(myRank)}>
               {getInitials(currentUser?.full_name || "?")}
             </div>
             <div className="flex-1">
@@ -80,53 +83,77 @@ export default function DashboardPage() {
               </div>
               <p className="mt-1 text-sm text-slate-500">
                 {currentUser?.office} Office · {currentUser?.department}
+                {currentUser?.position && <> · {currentUser.position}</>}
               </p>
               <p className="mt-1 text-sm text-slate-400">{currentUser?.email}</p>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-blue-700">{currentUser?.points.toLocaleString() || 0}</div>
-              <div className="text-sm text-slate-400">total points</div>
-              <div className="mt-1 text-sm font-semibold text-amber-600">Rank #{myRank > 0 ? myRank : "-"}</div>
             </div>
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats — no duplicates */}
         <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[
-            { label: "Total Points", value: currentUser?.points.toLocaleString() || "0", trend: "All time earned", icon: "✨" },
-            { label: "Global Rank", value: myRank > 0 ? "#" + myRank : "-", trend: "Current position", icon: "🏆" },
-            { label: "Posts Received", value: posts.filter(p => p.to === currentUser?.full_name).length.toString(), trend: "Appreciations for you", icon: "💌" },
-            { label: "Budget Left", value: budgetLeft + "/" + myBudget, trend: (currentUser?.budget_used || 0) + " pts given", icon: "🎁" },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 px-3 py-2 text-lg ring-1 ring-blue-100">{s.icon}</div>
-                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Live</span>
-              </div>
-              <div className="text-sm font-medium text-slate-500">{s.label}</div>
-              <div className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{s.value}</div>
-              <div className="mt-2 text-sm font-semibold text-emerald-600">{s.trend}</div>
+          {/* Monthly Points */}
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 px-3 py-2 text-lg ring-1 ring-blue-100">📅</div>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Live</span>
             </div>
-          ))}
+            <div className="text-sm font-medium text-slate-500">Monthly Points</div>
+            <div className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{currentUser?.monthly_points?.toLocaleString() || "0"}</div>
+            <div className="mt-2 text-sm font-semibold text-slate-400">Total: {currentUser?.points?.toLocaleString() || "0"} pts</div>
+          </div>
+
+          {/* Global Rank */}
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 px-3 py-2 text-lg ring-1 ring-blue-100">🏆</div>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Live</span>
+            </div>
+            <div className="text-sm font-medium text-slate-500">Global Rank</div>
+            <div className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{myRank > 0 ? "#" + myRank : "-"}</div>
+            <div className="mt-2 text-sm font-semibold text-slate-400">among {profiles.length} members</div>
+          </div>
+
+          {/* Posts Received */}
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 px-3 py-2 text-lg ring-1 ring-blue-100">💌</div>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Live</span>
+            </div>
+            <div className="text-sm font-medium text-slate-500">Received</div>
+            <div className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{postsReceived.length}</div>
+            <div className="mt-2 text-sm font-semibold text-slate-400">Sent {postsSent.length} appreciations</div>
+          </div>
+
+          {/* Budget Left — with progress bar */}
+          <div className="rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 px-3 py-2 text-lg ring-1 ring-blue-100">🎁</div>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Live</span>
+            </div>
+            <div className="text-sm font-medium text-slate-500">Budget Left</div>
+            <div className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{budgetLeft} <span className="text-base font-medium text-slate-400">/ {myBudget}</span></div>
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="h-1.5 rounded-full bg-blue-500 transition-all" style={{ width: budgetPercent + "%" }} />
+            </div>
+            <div className="mt-1.5 text-xs text-slate-400">{currentUser?.budget_used || 0} pts given this month</div>
+          </div>
         </div>
 
+        {/* Appreciation Received + Sent */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* My appreciation received */}
           <section className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-6 shadow-xl backdrop-blur-xl">
             <div className="absolute -right-20 -top-20 h-52 w-52 rounded-full bg-amber-100/80 blur-3xl" />
             <div className="relative">
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-950">Appreciation Received</h2>
-                  <p className="text-sm text-slate-500">Posts sent to you</p>
-                </div>
+              <div className="mb-5">
+                <h2 className="text-lg font-bold text-slate-950">Appreciation Received</h2>
+                <p className="text-sm text-slate-500">{postsReceived.length} posts sent to you</p>
               </div>
               <div className="space-y-3">
-                {posts.filter(p => p.to === currentUser?.full_name).length === 0 && (
+                {postsReceived.length === 0 && (
                   <div className="py-8 text-center text-sm text-slate-400">No appreciations yet</div>
                 )}
-                {posts.filter(p => p.to === currentUser?.full_name).map((p) => (
+                {postsReceived.map((p) => (
                   <div key={p.id} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm">
                     <div className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white " + p.fromColor}>
                       {p.fromAvatar}
@@ -134,6 +161,7 @@ export default function DashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-bold text-slate-950">{p.from}</div>
                       <div className="text-xs text-slate-500 truncate">{p.title}</div>
+                      <div className="mt-0.5 text-xs text-slate-400">{p.time}</div>
                     </div>
                     <div className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-700">
                       +{p.points}pts
@@ -144,32 +172,34 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* Recent posts in feed */}
           <section className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-6 shadow-xl backdrop-blur-xl">
             <div className="absolute -right-24 bottom-0 h-60 w-60 rounded-full bg-emerald-100/80 blur-3xl" />
             <div className="relative">
               <div className="mb-5 flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-950">Latest News Feed</h2>
-                  <p className="text-sm text-slate-500">Recent appreciations</p>
+                  <h2 className="text-lg font-bold text-slate-950">Appreciation Sent</h2>
+                  <p className="text-sm text-slate-500">{postsSent.length} posts you've sent</p>
                 </div>
-                <a href="/feed" className="text-sm font-semibold text-blue-700 hover:text-blue-800">View all →</a>
+                <a href="/post" className="rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700">
+                  + Send
+                </a>
               </div>
-              <div className="space-y-4">
-                {recentPosts.map((p) => (
-                  <div key={p.id} className="rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm">
-                    <div className="mb-2 flex items-start justify-between gap-4">
-                      <div className="text-sm">
-                        <span className="font-bold text-slate-950">{p.from}</span>
-                        <span className="mx-2 text-slate-400">→</span>
-                        <span className="font-bold text-slate-950">{p.to}</span>
-                      </div>
-                      <span className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-700 ring-1 ring-amber-200">+{p.points}pts</span>
+              <div className="space-y-3">
+                {postsSent.length === 0 && (
+                  <div className="py-8 text-center text-sm text-slate-400">You haven't sent any appreciations yet</div>
+                )}
+                {postsSent.map((p) => (
+                  <div key={p.id} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm">
+                    <div className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white " + p.fromColor}>
+                      {getInitials(p.to)}
                     </div>
-                    <p className="text-sm leading-6 text-slate-700 line-clamp-2">{p.message}</p>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">{p.category}</span>
-                      <span className="text-xs font-medium text-slate-400">{p.time}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold text-slate-950">{p.to}</div>
+                      <div className="text-xs text-slate-500 truncate">{p.title}</div>
+                      <div className="mt-0.5 text-xs text-slate-400">{p.time}</div>
+                    </div>
+                    <div className="shrink-0 rounded-full bg-emerald-100 px-3 py-1 text-sm font-bold text-emerald-700">
+                      +{p.points}pts
                     </div>
                   </div>
                 ))}
