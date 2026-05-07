@@ -117,7 +117,7 @@ export default function FeedPage() {
         <div className="relative mb-6 overflow-hidden rounded-[2rem] border border-white/70 bg-white/75 p-7 shadow-xl shadow-blue-100/50 backdrop-blur-xl">
           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-200/50 blur-2xl" />
           <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-end">
-            <div>
+            <div className="flex-1">
               <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100">
                 News Feed
               </span>
@@ -127,8 +127,28 @@ export default function FeedPage() {
               <p className="mt-3 text-sm leading-6 text-slate-600">
                 {posts.length} appreciations shared between Japan and Vietnam offices.
               </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <div className="flex items-center gap-2 rounded-2xl bg-blue-50 px-4 py-2.5 ring-1 ring-blue-100">
+                  <span className="text-base">💌</span>
+                  <div>
+                    <div className="text-xs text-blue-500 font-medium">You received</div>
+                    <div className="text-lg font-bold text-blue-700 leading-tight">
+                      {posts.filter(p => p.to === currentUser?.full_name).reduce((a, p) => a + p.points, 0)} pts
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-2.5 ring-1 ring-emerald-100">
+                  <span className="text-base">📤</span>
+                  <div>
+                    <div className="text-xs text-emerald-500 font-medium">You sent</div>
+                    <div className="text-lg font-bold text-emerald-700 leading-tight">
+                      {posts.filter(p => p.from === currentUser?.full_name).length} posts
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <a href="/post" className="inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-200 hover:bg-blue-700">
+            <a href="/post" className="inline-flex shrink-0 items-center justify-center rounded-full bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-200 hover:bg-blue-700">
               + Add Post
             </a>
           </div>

@@ -71,16 +71,39 @@ export default function LeaderboardPage() {
         <div className="relative mb-8 overflow-hidden rounded-[2rem] border border-white/70 bg-white/75 p-7 shadow-xl shadow-blue-100/50 backdrop-blur-xl">
           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-200/50 blur-2xl" />
           <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-end">
-            <div>
+            <div className="flex-1">
               <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100">
                 Company Dashboard
               </span>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
                 Recognition Dashboard
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              <p className="mt-3 text-sm leading-6 text-slate-600">
                 Live ranking updated in real time.
               </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <div className="flex items-center gap-2 rounded-2xl bg-blue-50 px-4 py-2.5 ring-1 ring-blue-100">
+                  <span className="text-base">👥</span>
+                  <div>
+                    <div className="text-xs text-blue-500 font-medium">Members</div>
+                    <div className="text-lg font-bold text-blue-700 leading-tight">{profiles.length}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-2.5 ring-1 ring-emerald-100">
+                  <span className="text-base">✨</span>
+                  <div>
+                    <div className="text-xs text-emerald-500 font-medium">Points Distributed</div>
+                    <div className="text-lg font-bold text-emerald-700 leading-tight">{posts.reduce((a, p) => a + p.points, 0).toLocaleString()}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-2xl bg-amber-50 px-4 py-2.5 ring-1 ring-amber-100">
+                  <span className="text-base">💌</span>
+                  <div>
+                    <div className="text-xs text-amber-500 font-medium">Appreciations</div>
+                    <div className="text-lg font-bold text-amber-700 leading-tight">{posts.length}</div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="flex gap-3">
               <span className="rounded-full bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 ring-1 ring-amber-100">
