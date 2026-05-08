@@ -243,6 +243,7 @@ export default function FeedPage() {
               return (
                 <article
                   key={p.id}
+                  id={`post-${p.id}`}
                   className={"animate-fade-in-up relative overflow-hidden rounded-[2rem] border-l-4 border border-white/80 bg-white/90 shadow-xl backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-2xl " + (categoryBorder[p.category] || "border-l-slate-300") + (isForMe ? " ring-2 ring-blue-200 shadow-blue-100/60" : "")}
                   style={{ animationDelay: `${filteredPosts.indexOf(p) * 60}ms` }}
                 >

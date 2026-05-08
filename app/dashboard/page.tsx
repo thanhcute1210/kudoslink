@@ -208,19 +208,22 @@ export default function DashboardPage() {
                   <div className="py-8 text-center text-sm text-slate-400">No appreciations yet</div>
                 )}
                 {postsReceived.map((p) => (
-                  <div key={p.id} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm transition hover:shadow-md">
+                  <a key={p.id} href={`/feed#post-${p.id}`} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm transition hover:shadow-md hover:border-blue-200 hover:bg-blue-50/50 group">
                     <div className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white " + p.fromColor}>
                       {p.fromAvatar}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-slate-950">{p.from}</div>
+                      <div className="text-sm font-bold text-slate-950 group-hover:text-blue-700 transition-colors">{p.from}</div>
                       <div className="text-xs text-slate-500 truncate">{p.title}</div>
                       <div className="mt-0.5 text-xs text-slate-400">{p.time}</div>
                     </div>
-                    <div className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-700">
-                      +{p.points}pts
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-700">
+                        +{p.points}pts
+                      </div>
+                      <span className="text-slate-300 group-hover:text-blue-400 transition-colors text-sm">→</span>
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>
@@ -243,19 +246,22 @@ export default function DashboardPage() {
                   <div className="py-8 text-center text-sm text-slate-400">You haven't sent any appreciations yet</div>
                 )}
                 {postsSent.map((p) => (
-                  <div key={p.id} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm transition hover:shadow-md">
+                  <a key={p.id} href={`/feed#post-${p.id}`} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm transition hover:shadow-md hover:border-emerald-200 hover:bg-emerald-50/50 group">
                     <div className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white " + p.fromColor}>
                       {getInitials(p.to)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-slate-950">{p.to}</div>
+                      <div className="text-sm font-bold text-slate-950 group-hover:text-emerald-700 transition-colors">{p.to}</div>
                       <div className="text-xs text-slate-500 truncate">{p.title}</div>
                       <div className="mt-0.5 text-xs text-slate-400">{p.time}</div>
                     </div>
-                    <div className="shrink-0 rounded-full bg-emerald-100 px-3 py-1 text-sm font-bold text-emerald-700">
-                      +{p.points}pts
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-bold text-emerald-700">
+                        +{p.points}pts
+                      </div>
+                      <span className="text-slate-300 group-hover:text-emerald-400 transition-colors text-sm">→</span>
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>
