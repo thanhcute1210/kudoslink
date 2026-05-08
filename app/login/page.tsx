@@ -2,6 +2,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { useStore } from "@/lib/store"
+import { useT } from "@/lib/useT"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -9,11 +11,13 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { lang, setLang } = useStore()
+  const t = useT()
 
   async function handleLogin() {
     setError("")
-    if (!email) { setError("Please enter your email"); return }
-    if (!password) { setError("Please enter your password"); return }
+    if (!email) { setError(t.login_err_email); return }
+    if (!password) { setError(t.login_err_pw); return }
 
     setLoading(true)
 
@@ -23,7 +27,7 @@ export default function LoginPage() {
     })
 
     if (error) {
-      setError("Invalid email or password. Please try again.")
+      setError(t.login_err_bad)
       setLoading(false)
       return
     }
@@ -54,24 +58,40 @@ export default function LoginPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-black tracking-tight" style={{ color: "#24243F" }}>My OneValue</h1>
-            <p className="mt-1 text-sm font-semibold text-slate-400">Internal Recognition Platform</p>
+            <p className="mt-1 text-sm font-semibold text-slate-400">{t.login_subtitle}</p>
+
+            {/* Language switcher */}
+            <div className="mt-3 flex justify-center gap-2">
+              <button
+                onClick={() => setLang("vi")}
+                className={"flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition border " + (lang === "vi" ? "border-slate-300 bg-white shadow-sm text-slate-800" : "border-transparent text-slate-400 hover:text-slate-600")}
+              >
+                <span>🇻🇳</span> Tiếng Việt
+              </button>
+              <button
+                onClick={() => setLang("ja")}
+                className={"flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition border " + (lang === "ja" ? "border-slate-300 bg-white shadow-sm text-slate-800" : "border-transparent text-slate-400 hover:text-slate-600")}
+              >
+                <span>🇯🇵</span> 日本語
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-bold text-slate-700">Email</label>
+              <label className="mb-2 block text-sm font-bold text-slate-700">{t.login_email}</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                placeholder="you@company.com"
+                placeholder="you@onevalue.jp"
                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-bold text-slate-700">Password</label>
+              <label className="mb-2 block text-sm font-bold text-slate-700">{t.login_password}</label>
               <input
                 type="password"
                 value={password}
@@ -94,7 +114,7 @@ export default function LoginPage() {
               className="w-full rounded-2xl py-3.5 text-sm font-bold text-white shadow-md transition hover:opacity-90 disabled:opacity-60"
               style={{ background: "linear-gradient(135deg, #24243F 0%, #27D6D8 100%)" }}
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? t.login_loading : t.login_signin}
             </button>
           </div>
         </div>

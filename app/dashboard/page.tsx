@@ -4,6 +4,7 @@ import { useStore } from "@/lib/store"
 import { useEffect, useRef, useState } from "react"
 import { useAuthGuard } from "@/lib/useAuthGuard"
 import { useCountUp } from "@/lib/useCountUp"
+import { useT } from "@/lib/useT"
 
 const BADGES = [
   { name: "Bronze",   min: 0,    max: 400,  color: "bg-orange-100 text-orange-700 ring-orange-200" },
@@ -41,12 +42,13 @@ export default function DashboardPage() {
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const t = useT()
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 2 * 1024 * 1024) {
-      setAvatarError("File quá lớn. Tối đa 2 MB.")
+      setAvatarError(t.dash_photo_too_big)
       return
     }
     setAvatarUploading(true)
@@ -111,7 +113,7 @@ export default function DashboardPage() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="group relative h-20 w-20 shrink-0 rounded-full focus:outline-none"
-              title="Đổi ảnh đại diện"
+              title={t.dash_change_photo}
             >
               {currentUser?.avatar ? (
                 <div className="h-20 w-20 overflow-hidden rounded-full shadow-lg ring-2 ring-white">
@@ -130,7 +132,7 @@ export default function DashboardPage() {
                 ) : (
                   <>
                     <span className="text-lg">📷</span>
-                    <span className="mt-0.5 text-[10px] font-bold text-white">Đổi ảnh</span>
+                    <span className="mt-0.5 text-[10px] font-bold text-white">{t.nav_change_photo}</span>
                   </>
                 )}
               </div>
@@ -170,42 +172,42 @@ export default function DashboardPage() {
           <div className="animate-fade-in-up rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-xl" style={{ animationDelay: "60ms" }}>
             <div className="mb-4 flex items-center justify-between">
               <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 px-3 py-2 text-lg ring-1 ring-blue-100">📅</div>
-              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Live</span>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">{t.dash_live}</span>
             </div>
-            <div className="text-sm font-medium text-slate-500">Monthly Points</div>
+            <div className="text-sm font-medium text-slate-500">{t.dash_monthly_pts}</div>
             <div className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{animatedMonthly.toLocaleString()}</div>
-            <div className="mt-2 text-sm font-semibold text-slate-400">Total: {animatedPoints.toLocaleString()} pts</div>
+            <div className="mt-2 text-sm font-semibold text-slate-400">{t.dash_total}: {animatedPoints.toLocaleString()} pts</div>
           </div>
 
           {/* Global Rank */}
           <div className="animate-fade-in-up rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-xl" style={{ animationDelay: "120ms" }}>
             <div className="mb-4 flex items-center justify-between">
               <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 px-3 py-2 text-lg ring-1 ring-blue-100">🏆</div>
-              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Live</span>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">{t.dash_live}</span>
             </div>
-            <div className="text-sm font-medium text-slate-500">Global Rank</div>
+            <div className="text-sm font-medium text-slate-500">{t.dash_rank}</div>
             <div className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{myRank > 0 ? "#" + myRank : "-"}</div>
-            <div className="mt-2 text-sm font-semibold text-slate-400">among {profiles.length} members</div>
+            <div className="mt-2 text-sm font-semibold text-slate-400">{t.dash_among} {profiles.length} {t.dash_members}</div>
           </div>
 
           {/* Posts */}
           <div className="animate-fade-in-up rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-xl" style={{ animationDelay: "180ms" }}>
             <div className="mb-4 flex items-center justify-between">
               <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 px-3 py-2 text-lg ring-1 ring-blue-100">💌</div>
-              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Live</span>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">{t.dash_live}</span>
             </div>
-            <div className="text-sm font-medium text-slate-500">Received</div>
+            <div className="text-sm font-medium text-slate-500">{t.dash_received}</div>
             <div className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{postsReceived.length}</div>
-            <div className="mt-2 text-sm font-semibold text-slate-400">Sent {postsSent.length} appreciations</div>
+            <div className="mt-2 text-sm font-semibold text-slate-400">{t.dash_sent_count} {postsSent.length} {t.dash_appreciations}</div>
           </div>
 
           {/* Budget — animated bar */}
           <div className="animate-fade-in-up rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-xl" style={{ animationDelay: "240ms" }}>
             <div className="mb-4 flex items-center justify-between">
               <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 px-3 py-2 text-lg ring-1 ring-blue-100">🎁</div>
-              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">Live</span>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">{t.dash_live}</span>
             </div>
-            <div className="text-sm font-medium text-slate-500">Budget Left</div>
+            <div className="text-sm font-medium text-slate-500">{t.dash_budget_left}</div>
             <div className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
               {animatedBudget} <span className="text-base font-medium text-slate-400">/ {myBudget}</span>
             </div>
@@ -215,7 +217,7 @@ export default function DashboardPage() {
                 style={{ width: (barsMounted ? budgetPercent : 0) + "%" }}
               />
             </div>
-            <div className="mt-1.5 text-xs text-slate-400">{currentUser?.budget_used || 0} pts given this month</div>
+            <div className="mt-1.5 text-xs text-slate-400">{currentUser?.budget_used || 0} {t.dash_pts_given}</div>
           </div>
         </div>
 
@@ -223,11 +225,11 @@ export default function DashboardPage() {
         <div className="animate-fade-in-up mb-8 overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl" style={{ animationDelay: "280ms" }}>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-sm font-bold text-slate-950">Badge Progress</h2>
+              <h2 className="text-sm font-bold text-slate-950">{t.dash_badge}</h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 {nextBadge
-                  ? `${nextBadge.min - (currentUser?.points || 0)} pts to ${nextBadge.name}`
-                  : "You've reached the highest badge! 🎉"}
+                  ? `${nextBadge.min - (currentUser?.points || 0)} pts ${t.dash_badge_to} ${nextBadge.name}`
+                  : t.dash_badge_max}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -255,12 +257,12 @@ export default function DashboardPage() {
             <div className="absolute -right-20 -top-20 h-52 w-52 rounded-full bg-amber-200/60 blur-3xl" />
             <div className="relative">
               <div className="mb-5">
-                <h2 className="text-lg font-bold text-slate-950">Appreciation Received</h2>
-                <p className="text-sm text-slate-500">{postsReceived.length} posts sent to you</p>
+                <h2 className="text-lg font-bold text-slate-950">{t.dash_appreciation_received}</h2>
+                <p className="text-sm text-slate-500">{postsReceived.length} {t.dash_posts_to_you}</p>
               </div>
               <div className="space-y-3">
                 {postsReceived.length === 0 && (
-                  <div className="py-8 text-center text-sm text-slate-400">No appreciations yet</div>
+                  <div className="py-8 text-center text-sm text-slate-400">{t.dash_no_received}</div>
                 )}
                 {postsReceived.map((p) => (
                   <a key={p.id} href={`/feed#post-${p.id}`} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm transition hover:shadow-md hover:border-blue-200 hover:bg-blue-50/50 group">
@@ -289,16 +291,16 @@ export default function DashboardPage() {
             <div className="relative">
               <div className="mb-5 flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-950">Appreciation Sent</h2>
-                  <p className="text-sm text-slate-500">{postsSent.length} posts you've sent</p>
+                  <h2 className="text-lg font-bold text-slate-950">{t.dash_appreciation_sent}</h2>
+                  <p className="text-sm text-slate-500">{postsSent.length} {t.dash_posts_by_you}</p>
                 </div>
                 <a href="/post" className="rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition">
-                  + Send
+                  {t.dash_send_btn}
                 </a>
               </div>
               <div className="space-y-3">
                 {postsSent.length === 0 && (
-                  <div className="py-8 text-center text-sm text-slate-400">You haven't sent any appreciations yet</div>
+                  <div className="py-8 text-center text-sm text-slate-400">{t.dash_no_sent}</div>
                 )}
                 {postsSent.map((p) => (
                   <a key={p.id} href={`/feed#post-${p.id}`} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm transition hover:shadow-md hover:border-emerald-200 hover:bg-emerald-50/50 group">

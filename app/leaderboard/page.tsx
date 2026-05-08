@@ -4,6 +4,7 @@ import { useStore } from "@/lib/store"
 import { useEffect, useState } from "react"
 import { useAuthGuard } from "@/lib/useAuthGuard"
 import { useCountUp } from "@/lib/useCountUp"
+import { useT } from "@/lib/useT"
 
 const badgeColor: Record<string, string> = {
   Legend: "text-purple-700 bg-purple-50 ring-purple-100",
@@ -43,6 +44,7 @@ type OfficeFilter = "All" | "Japan" | "Vietnam"
 
 export default function LeaderboardPage() {
   useAuthGuard()
+  const t = useT()
   const { profiles, loadProfiles, posts, loadPosts, currentUser, loadUser } = useStore()
   const [filterOffice, setFilterOffice] = useState<OfficeFilter>("All")
 
@@ -80,33 +82,33 @@ export default function LeaderboardPage() {
           <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div className="flex-1">
               <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100">
-                Company Dashboard
+                {t.lb_company_tag}
               </span>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-                Recognition Dashboard
+                {t.lb_title}
               </h1>
               <p className="mt-3 text-sm leading-6 text-slate-600">
-                Live ranking updated in real time.
+                {t.lb_subtitle}
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <div className="flex items-center gap-2 rounded-2xl bg-blue-50 px-4 py-2.5 ring-1 ring-blue-100">
                   <span className="text-base">👥</span>
                   <div>
-                    <div className="text-xs text-blue-500 font-medium">Members</div>
+                    <div className="text-xs text-blue-500 font-medium">{t.lb_members}</div>
                     <div className="text-lg font-bold text-blue-700 leading-tight">{profiles.length}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-2.5 ring-1 ring-emerald-100">
                   <span className="text-base">✨</span>
                   <div>
-                    <div className="text-xs text-emerald-500 font-medium">Points Distributed</div>
+                    <div className="text-xs text-emerald-500 font-medium">{t.lb_pts_dist}</div>
                     <div className="text-lg font-bold text-emerald-700 leading-tight">{posts.reduce((a, p) => a + p.points, 0).toLocaleString()}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 rounded-2xl bg-amber-50 px-4 py-2.5 ring-1 ring-amber-100">
                   <span className="text-base">💌</span>
                   <div>
-                    <div className="text-xs text-amber-500 font-medium">Appreciations</div>
+                    <div className="text-xs text-amber-500 font-medium">{t.lb_appreciations}</div>
                     <div className="text-lg font-bold text-amber-700 leading-tight">{posts.length}</div>
                   </div>
                 </div>
@@ -123,9 +125,9 @@ export default function LeaderboardPage() {
         {/* Stats */}
         <div className="mb-8 grid gap-4 md:grid-cols-3">
           {[
-            { label: "Total Appreciations", value: animatedPosts.toString(), sub: `${totalPoints.toLocaleString()} pts total`, icon: "💌" },
-            { label: "Points This Month", value: "+" + animatedMonthly.toLocaleString(), sub: "Distributed this month", icon: "📈" },
-            { label: "Active Members", value: animatedMembers.toString(), sub: "Japan × Vietnam", icon: "🤝" },
+            { label: t.lb_total_app, value: animatedPosts.toString(), sub: `${totalPoints.toLocaleString()} pts total`, icon: "💌" },
+            { label: t.lb_pts_month, value: "+" + animatedMonthly.toLocaleString(), sub: t.lb_pts_month_sub, icon: "📈" },
+            { label: t.lb_active, value: animatedMembers.toString(), sub: t.lb_active_sub, icon: "🤝" },
           ].map((item) => (
             <div key={item.label} className="rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg backdrop-blur-xl transition hover:-translate-y-0.5">
               <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 text-xl ring-1 ring-blue-100">
@@ -159,7 +161,7 @@ export default function LeaderboardPage() {
                   <div className="text-lg font-bold text-slate-950">{e.full_name}</div>
                   <div className="mt-1 text-sm text-slate-500">{e.office} · {e.department}</div>
                   <div className="mt-4 text-3xl font-bold text-blue-700">{e.points.toLocaleString()}</div>
-                  <div className="text-xs font-medium text-slate-400">total points</div>
+                  <div className="text-xs font-medium text-slate-400">{t.lb_total_pts}</div>
                   <span className={"mt-4 inline-flex rounded-full px-3 py-1 text-xs font-bold ring-1 " + badgeColor[getBadge(e.points)]}>
                     {getBadge(e.points)}
                   </span>
@@ -173,14 +175,14 @@ export default function LeaderboardPage() {
         <section className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 shadow-xl backdrop-blur-xl">
           <div className="relative flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-bold text-slate-950">Full Ranking</h2>
+              <h2 className="text-lg font-bold text-slate-950">{t.lb_full_ranking}</h2>
               <p className="mt-1 text-sm text-slate-500">
-                {filterOffice === "All" ? `${sorted.length} members` : `${filtered.length} members · ${filterOffice} office`}
+                {filterOffice === "All" ? `${sorted.length} ${t.lb_member_count}` : `${filtered.length} ${t.lb_member_count} · ${filterOffice}`}
               </p>
             </div>
             {/* Office filter */}
             <div className="flex gap-2">
-              {(["All", "Japan", "Vietnam"] as OfficeFilter[]).map((o) => (
+              {(["All", "Japan", "Vietnam"] as OfficeFilter[]).map((o, i) => (
                 <button
                   key={o}
                   onClick={() => setFilterOffice(o)}
@@ -190,7 +192,7 @@ export default function LeaderboardPage() {
                       : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50 hover:text-blue-700"
                   )}
                 >
-                  {o}
+                  {i === 0 ? t.lb_all : o}
                 </button>
               ))}
             </div>
@@ -237,7 +239,7 @@ export default function LeaderboardPage() {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-slate-950">{e.full_name}</span>
                         {isMe && (
-                          <span className="rounded-full bg-blue-600 px-2 py-0.5 text-xs font-bold text-white">You</span>
+                          <span className="rounded-full bg-blue-600 px-2 py-0.5 text-xs font-bold text-white">{t.lb_you}</span>
                         )}
                       </div>
                       <div className="text-xs text-slate-500">{e.department}</div>
@@ -253,8 +255,8 @@ export default function LeaderboardPage() {
                       {getBadge(e.points)}
                     </span>
                   </div>
-                  <div className="text-sm font-bold text-emerald-600">+{e.monthly_points}</div>
-                  <div className="font-bold text-blue-700">{e.points.toLocaleString()}</div>
+                  <div className="text-sm font-bold text-emerald-600">+{e.monthly_points} pts</div>
+                  <div className="font-bold text-blue-700">{e.points.toLocaleString()} pts</div>
                 </div>
               )
             })}

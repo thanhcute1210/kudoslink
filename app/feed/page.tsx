@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import { useStore } from "@/lib/store"
 import Navbar from "@/components/ui/navbar"
 import { useAuthGuard } from "@/lib/useAuthGuard"
+import { useT } from "@/lib/useT"
 
 const categoryColor: Record<string, string> = {
   "M&A Support":    "bg-blue-50 text-blue-700 ring-blue-100",
@@ -36,6 +37,7 @@ function getInitials(name: string): string {
 
 export default function FeedPage() {
   useAuthGuard()
+  const t = useT()
   const {
     posts, profiles, currentUser, addReaction, removeReaction,
     loadUser, loadProfiles, loadPosts, loadMorePosts,
@@ -75,7 +77,7 @@ export default function FeedPage() {
     } else {
       addReaction(postId, emoji)
       next = { ...myReactions, [key]: [...already, emoji] }
-      setToast("Reaction added!")
+      setToast(t.feed_reaction_added)
       setTimeout(() => setToast(""), 2000)
     }
     setMyReactions(next)
@@ -149,37 +151,37 @@ export default function FeedPage() {
           <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div className="flex-1">
               <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100">
-                News Feed
+                {t.feed_label}
               </span>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-                Share thanks. Make teamwork visible.
+                {t.feed_headline}
               </h1>
               <p className="mt-3 text-sm leading-6 text-slate-600">
-                {posts.length} appreciations shared between Japan and Vietnam offices.
+                {posts.length} {t.feed_total_posts.toLowerCase()}
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <div className="flex items-center gap-2 rounded-2xl bg-blue-50 px-4 py-2.5 ring-1 ring-blue-100">
                   <span className="text-base">💌</span>
                   <div>
-                    <div className="text-xs text-blue-500 font-medium">You received</div>
+                    <div className="text-xs text-blue-500 font-medium">{t.feed_you_received}</div>
                     <div className="text-lg font-bold text-blue-700 leading-tight">
-                      {posts.filter(p => p.to === currentUser?.full_name).reduce((a, p) => a + p.points, 0)} pts
+                      {posts.filter(p => p.to === currentUser?.full_name).reduce((a, p) => a + p.points, 0)} {t.feed_pts}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-2.5 ring-1 ring-emerald-100">
                   <span className="text-base">📤</span>
                   <div>
-                    <div className="text-xs text-emerald-500 font-medium">You sent</div>
+                    <div className="text-xs text-emerald-500 font-medium">{t.feed_you_sent}</div>
                     <div className="text-lg font-bold text-emerald-700 leading-tight">
-                      {posts.filter(p => p.from === currentUser?.full_name).length} posts
+                      {posts.filter(p => p.from === currentUser?.full_name).length} {t.feed_posts}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
             <a href="/post" className="inline-flex shrink-0 items-center justify-center rounded-full bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-[#27D6D8]/20 hover:bg-blue-700">
-              + Add Post
+              {t.feed_add_post}
             </a>
           </div>
         </div>
@@ -195,7 +197,7 @@ export default function FeedPage() {
                   : "bg-white text-slate-600 ring-slate-200 hover:bg-slate-50"
               )}
             >
-              All ({posts.length})
+              {t.feed_all_filter} ({posts.length})
             </button>
             {allCategories.map(cat => (
               <button
@@ -219,9 +221,7 @@ export default function FeedPage() {
             onClick={() => { loadPosts(true); dismissNewPosts() }}
             className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3 text-sm font-bold text-white shadow-lg shadow-[#27D6D8]/20 animate-fade-in-up hover:bg-blue-700 transition"
           >
-            <span className="animate-bounce">✨</span>
-            New appreciations posted! Click to refresh
-            <span className="animate-bounce">✨</span>
+            {t.feed_new_banner}
           </button>
         )}
 
@@ -232,10 +232,10 @@ export default function FeedPage() {
               <div className="rounded-[2rem] border border-white/80 bg-white/85 p-12 text-center shadow-xl backdrop-blur-xl">
                 <div className="text-4xl mb-4">🎉</div>
                 <p className="text-slate-500 text-sm">
-                  {filterCategory ? `No posts in "${filterCategory}" yet.` : "No posts yet. Be the first to appreciate someone!"}
+                  {filterCategory ? t.feed_empty_cat : t.feed_empty}
                 </p>
                 <a href="/post" className="mt-4 inline-flex rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700">
-                  + Add Post
+                  {t.feed_add_post}
                 </a>
               </div>
             )}
@@ -299,7 +299,7 @@ export default function FeedPage() {
                         +{p.points} pts
                       </div>
                       {isForMe && (
-                        <span className="rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-bold text-white">For you ✨</span>
+                        <span className="rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-bold text-white">{t.feed_for_you}</span>
                       )}
                     </div>
                   </div>
@@ -345,7 +345,7 @@ export default function FeedPage() {
                           onClick={() => setShowPicker(showPicker === p.id ? null : p.id)}
                           className="flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500 ring-1 ring-slate-200 hover:bg-white hover:text-slate-700"
                         >
-                          <span>+</span> React
+                          {t.feed_react}
                         </button>
                         {showPicker === p.id && (
                           <div className="absolute bottom-10 left-0 z-30 flex gap-1 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl">
@@ -373,10 +373,10 @@ export default function FeedPage() {
                   {postsLoading ? (
                     <>
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
-                      Loading...
+                      {t.feed_loading}
                     </>
                   ) : (
-                    <>↓ Load more posts</>
+                    <>{t.feed_load_more}</>
                   )}
                 </button>
               </div>
@@ -384,7 +384,7 @@ export default function FeedPage() {
 
             {!postsHasMore && posts.length > 0 && (
               <p className="pt-2 text-center text-xs text-slate-400">
-                All {posts.length} posts loaded ✓
+                {posts.length} {t.feed_all_loaded}
               </p>
             )}
           </div>
@@ -393,19 +393,19 @@ export default function FeedPage() {
           <aside className="space-y-4">
             {/* Feed Summary */}
             <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-xl backdrop-blur-xl">
-              <h2 className="text-base font-bold text-slate-950">Feed Summary</h2>
-              <p className="mt-1 text-sm text-slate-500">Recognition activity</p>
+              <h2 className="text-base font-bold text-slate-950">{t.feed_summary}</h2>
+              <p className="mt-1 text-sm text-slate-500">{t.feed_summary_sub}</p>
               <div className="mt-5 space-y-3">
                 <div className="flex items-center justify-between rounded-2xl bg-blue-50 px-4 py-3 ring-1 ring-blue-100">
-                  <span className="text-sm font-semibold text-blue-700">Total Posts</span>
+                  <span className="text-sm font-semibold text-blue-700">{t.feed_total_posts}</span>
                   <span className="text-lg font-bold text-blue-700">{posts.length}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-emerald-50 px-4 py-3 ring-1 ring-emerald-100">
-                  <span className="text-sm font-semibold text-emerald-700">Points Given</span>
+                  <span className="text-sm font-semibold text-emerald-700">{t.feed_pts_given}</span>
                   <span className="text-lg font-bold text-emerald-700">{posts.reduce((a, p) => a + p.points, 0)}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-amber-50 px-4 py-3 ring-1 ring-amber-100">
-                  <span className="text-sm font-semibold text-amber-700">Latest Post</span>
+                  <span className="text-sm font-semibold text-amber-700">{t.feed_latest}</span>
                   <span className="text-sm font-bold text-amber-700">{posts[0]?.time || "-"}</span>
                 </div>
               </div>
@@ -414,8 +414,8 @@ export default function FeedPage() {
             {/* Top 3 Receivers */}
             {top3Receivers.length > 0 && (
               <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-xl backdrop-blur-xl">
-                <h2 className="text-base font-bold text-slate-950">Top Receivers</h2>
-                <p className="mt-1 text-sm text-slate-500">Most appreciated members</p>
+                <h2 className="text-base font-bold text-slate-950">{t.feed_top_receivers}</h2>
+                <p className="mt-1 text-sm text-slate-500">{t.feed_receivers_sub}</p>
                 <div className="mt-4 space-y-3">
                   {top3Receivers.map(([name, data], i) => (
                     <div key={name} className="flex items-center gap-3">
@@ -439,8 +439,8 @@ export default function FeedPage() {
             {/* Category Breakdown */}
             {topCategories.length > 0 && (
               <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-xl backdrop-blur-xl">
-                <h2 className="text-base font-bold text-slate-950">Top Categories</h2>
-                <p className="mt-1 text-sm text-slate-500">Most used appreciation types</p>
+                <h2 className="text-base font-bold text-slate-950">{t.feed_top_cats}</h2>
+                <p className="mt-1 text-sm text-slate-500">{t.feed_cats_sub}</p>
                 <div className="mt-4 space-y-3">
                   {topCategories.map(([cat, count]) => (
                     <div key={cat}>

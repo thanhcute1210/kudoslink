@@ -5,6 +5,7 @@ import { useStore } from "@/lib/store"
 import { useRouter } from "next/navigation"
 import { useAuthGuard } from "@/lib/useAuthGuard"
 import { ConfettiTrigger } from "@/components/ui/confetti"
+import { useT } from "@/lib/useT"
 
 const categories = [
   "M&A", "Market Research", "Fast Support", "Translation",
@@ -14,6 +15,7 @@ const pointOptions = [10, 20, 30, 50, 100]
 
 export default function PostPage() {
   useAuthGuard()
+  const t = useT()
   const { profiles, loadProfiles, loadUser, addPost, currentUser, myBudget, companyValues, loadCompanyValues } = useStore()
   const router = useRouter()
   const remaining = myBudget - (currentUser?.budget_used || 0)
@@ -37,18 +39,18 @@ export default function PostPage() {
 
   async function handleSubmit() {
     setError("")
-    if (!to) { setError("Please select a recipient"); return }
-    if (!title) { setError("Please enter a title"); return }
-    if (!message) { setError("Please write a message"); return }
+    if (!to) { setError(t.post_err_to); return }
+    if (!title) { setError(t.post_err_title); return }
+    if (!message) { setError(t.post_err_msg); return }
     if (selectedPoints > remaining) {
-      setError("Not enough budget. You have " + remaining + " pts left")
+      setError(t.post_err_budget + " " + remaining + " pts")
       return
     }
 
     setLoading(true)
 
     const receiver = profiles.find(p => p.full_name === to)
-    if (!receiver) { setError("Recipient not found"); setLoading(false); return }
+    if (!receiver) { setError(t.post_err_found); setLoading(false); return }
 
     await addPost({
       from: currentUser?.full_name || "",
@@ -84,29 +86,29 @@ export default function PostPage() {
           <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-blue-100 text-5xl shadow-inner">
             🎉
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-950">Appreciation Sent!</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-950">{t.post_success}</h2>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            <span className="font-bold">{to}</span> received{" "}
-            <span className="font-bold text-amber-600">+{selectedPoints} points</span>
+            <span className="font-bold">{to}</span> {t.post_received}{" "}
+            <span className="font-bold text-amber-600">+{selectedPoints} pts</span>
           </p>
           {selectedValueId && (
             <p className="mt-1 text-xs text-slate-500">
-              Value: {companyValues.find(v => v.id === selectedValueId)?.icon} {companyValues.find(v => v.id === selectedValueId)?.title}
+              {t.post_value_label}: {companyValues.find(v => v.id === selectedValueId)?.icon} {companyValues.find(v => v.id === selectedValueId)?.title}
             </p>
           )}
-          <p className="mt-1 text-xs text-slate-400">Leaderboard and feed updated!</p>
+          <p className="mt-1 text-xs text-slate-400">{t.post_updated}</p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <button onClick={() => router.push("/feed")} className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-[#27D6D8]/20 hover:bg-blue-700">
-              View Feed
+              {t.post_view_feed}
             </button>
             <button onClick={() => router.push("/leaderboard")} className="rounded-full bg-amber-50 px-5 py-2.5 text-sm font-bold text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100">
-              See Leaderboard
+              {t.post_see_lb}
             </button>
             <button
               onClick={() => { setSubmitted(false); setTo(""); setTitle(""); setMessage(""); setSelectedPoints(30); setSelectedValueId("") }}
               className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
             >
-              Send Another
+              {t.post_send_another}
             </button>
           </div>
         </div>
@@ -129,13 +131,13 @@ export default function PostPage() {
         <div className="relative mb-8 overflow-hidden rounded-[2rem] border border-white/70 bg-white/75 p-7 shadow-xl backdrop-blur-xl">
           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-200/50 blur-2xl" />
           <div className="relative">
-            <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100">Add Post</span>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">Thank someone for great work</h1>
+            <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100">{t.post_tag}</span>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">{t.post_title}</h1>
             <p className="mt-3 text-sm text-slate-600">
-              Sending as: <span className="font-bold">{currentUser?.full_name}</span> · {currentUser?.office}
+              {t.post_sending_as}: <span className="font-bold">{currentUser?.full_name}</span> · {currentUser?.office}
             </p>
             <div className="mt-4 inline-flex rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 ring-1 ring-emerald-100">
-              Remaining budget: {remaining} / {myBudget} pts
+              {t.post_remaining}: {remaining} / {myBudget} pts
             </div>
           </div>
         </div>
@@ -146,9 +148,9 @@ export default function PostPage() {
 
               {/* To */}
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">To</label>
+                <label className="mb-2 block text-sm font-bold text-slate-700">{t.post_to}</label>
                 <select value={to} onChange={(e) => setTo(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100">
-                  <option value="">Select employee...</option>
+                  <option value="">{t.post_to_ph}</option>
                   {otherProfiles.map((p) => (
                     <option key={p.id} value={p.full_name}>{p.full_name} ({p.office} · {p.department})</option>
                   ))}
@@ -157,19 +159,19 @@ export default function PostPage() {
 
               {/* Title */}
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">Title</label>
-                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Great support on M&A research" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100" />
+                <label className="mb-2 block text-sm font-bold text-slate-700">{t.post_title_label}</label>
+                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t.post_title_ph} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100" />
               </div>
 
               {/* Message */}
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">Message</label>
-                <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Describe what they did, why it was valuable, and how it helped the team..." rows={5} className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100" />
+                <label className="mb-2 block text-sm font-bold text-slate-700">{t.post_msg}</label>
+                <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t.post_msg_ph} rows={5} className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100" />
               </div>
 
               {/* Category */}
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">Category</label>
+                <label className="mb-2 block text-sm font-bold text-slate-700">{t.post_category}</label>
                 <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100">
                   {categories.map((c) => <option key={c}>{c}</option>)}
                 </select>
@@ -178,10 +180,10 @@ export default function PostPage() {
               {/* Company Value */}
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">
-                  Company Value <span className="text-slate-400 font-normal">(optional)</span>
+                  {t.post_value} <span className="text-slate-400 font-normal">{t.post_optional}</span>
                 </label>
                 <select value={selectedValueId} onChange={(e) => setSelectedValueId(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100">
-                  <option value="">Select a company value...</option>
+                  <option value="">{t.post_value_ph}</option>
                   {companyValues.map((v) => (
                     <option key={v.id} value={v.id}>{v.icon} {v.title}</option>
                   ))}
@@ -190,7 +192,7 @@ export default function PostPage() {
 
               {/* Points */}
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">Points to give</label>
+                <label className="mb-2 block text-sm font-bold text-slate-700">{t.post_points}</label>
                 <div className="flex flex-wrap gap-2">
                   {pointOptions.map((p) => (
                     <button key={p} onClick={() => setSelectedPoints(p)} disabled={p > remaining}
@@ -210,7 +212,7 @@ export default function PostPage() {
               )}
 
               <button onClick={handleSubmit} disabled={loading} className="w-full rounded-2xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md shadow-[#27D6D8]/20 transition hover:bg-blue-700 disabled:opacity-60">
-                {loading ? "Sending..." : "Send Appreciation · +" + selectedPoints + " pts"}
+                {loading ? t.post_submitting : t.post_submit + selectedPoints + " pts"}
               </button>
             </div>
           </section>
@@ -218,8 +220,8 @@ export default function PostPage() {
           <aside className="space-y-4">
             {/* Company Values Preview */}
             <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-xl backdrop-blur-xl">
-              <h2 className="text-base font-bold text-slate-950">Company Values</h2>
-              <p className="mt-1 text-xs text-slate-400">Tag your appreciation to a value</p>
+              <h2 className="text-base font-bold text-slate-950">{t.post_values_title}</h2>
+              <p className="mt-1 text-xs text-slate-400">{t.post_values_sub}</p>
               <div className="mt-4 space-y-2">
                 {companyValues.map((v) => (
                   <button key={v.id} onClick={() => setSelectedValueId(selectedValueId === v.id ? "" : v.id)}
@@ -238,32 +240,32 @@ export default function PostPage() {
 
             {/* Point guide */}
             <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-xl backdrop-blur-xl">
-              <h2 className="text-base font-bold text-slate-950">Point guide</h2>
+              <h2 className="text-base font-bold text-slate-950">{t.post_guide}</h2>
               <div className="mt-4 space-y-3 text-sm">
                 <div className="flex justify-between rounded-2xl bg-blue-50 px-4 py-3 text-blue-700 ring-1 ring-blue-100">
-                  <span className="font-semibold">Small help</span><span className="font-bold">10–20 pts</span>
+                  <span className="font-semibold">{t.post_small}</span><span className="font-bold">10–20 pts</span>
                 </div>
                 <div className="flex justify-between rounded-2xl bg-emerald-50 px-4 py-3 text-emerald-700 ring-1 ring-emerald-100">
-                  <span className="font-semibold">Strong support</span><span className="font-bold">30–50 pts</span>
+                  <span className="font-semibold">{t.post_strong}</span><span className="font-bold">30–50 pts</span>
                 </div>
                 <div className="flex justify-between rounded-2xl bg-amber-50 px-4 py-3 text-amber-700 ring-1 ring-amber-100">
-                  <span className="font-semibold">Above & beyond</span><span className="font-bold">100 pts</span>
+                  <span className="font-semibold">{t.post_beyond}</span><span className="font-bold">100 pts</span>
                 </div>
               </div>
             </div>
 
             {/* Budget */}
             <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-xl backdrop-blur-xl">
-              <h2 className="text-base font-bold text-slate-950">Your budget</h2>
+              <h2 className="text-base font-bold text-slate-950">{t.post_budget}</h2>
               <div className="mt-4">
                 <div className="flex justify-between text-sm mb-2">
-                  <span className="text-slate-500">Used</span>
+                  <span className="text-slate-500">{t.post_used}</span>
                   <span className="font-bold text-slate-700">{currentUser?.budget_used || 0} / {myBudget} pts</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                   <div className="h-2 rounded-full bg-blue-500 transition-all" style={{ width: Math.min(((currentUser?.budget_used || 0) / myBudget) * 100, 100) + "%" }} />
                 </div>
-                <div className="mt-2 text-xs text-slate-400 text-right">{remaining} pts remaining</div>
+                <div className="mt-2 text-xs text-slate-400 text-right">{remaining} {t.post_left}</div>
               </div>
             </div>
           </aside>

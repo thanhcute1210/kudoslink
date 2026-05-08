@@ -2,6 +2,7 @@ import { create } from "zustand"
 import { supabase } from "./supabase"
 import { avatarColor } from "./utils"
 import type { RealtimeChannel } from "@supabase/supabase-js"
+import type { Lang } from "./i18n"
 
 export type Post = {
   id: number
@@ -74,6 +75,10 @@ type Store = {
 
   updateAvatar: (file: File) => Promise<{ error?: string }>
 
+  // Language
+  lang: Lang
+  setLang: (lang: Lang) => void
+
   // Real-time
   realtimeChannel: RealtimeChannel | null
   newPostsAvailable: boolean
@@ -112,6 +117,11 @@ function dbToPost(row: any, values: CompanyValue[]): Post {
     message: row.message,
     reactions: row.reactions || {},
   }
+}
+
+function getInitialLang(): Lang {
+  if (typeof window === "undefined") return "vi"
+  return (localStorage.getItem("ov_lang") as Lang) || "vi"
 }
 
 export const useStore = create<Store>()((set, get) => ({
@@ -297,6 +307,13 @@ export const useStore = create<Store>()((set, get) => ({
   },
 
   myBudget: 300,
+
+  // ─── Language ─────────────────────────────────────────────────────────────
+  lang: getInitialLang(),
+  setLang: (lang) => {
+    if (typeof window !== "undefined") localStorage.setItem("ov_lang", lang)
+    set({ lang })
+  },
 
   // ─── Avatar upload ────────────────────────────────────────────────────────
   updateAvatar: async (file: File) => {

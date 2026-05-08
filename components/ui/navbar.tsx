@@ -2,9 +2,11 @@
 import { useEffect, useRef, useState } from "react"
 import { useStore } from "@/lib/store"
 import { usePathname } from "next/navigation"
+import { useT } from "@/lib/useT"
 
 export default function Navbar() {
-  const { currentUser, logout, loadUser, updateAvatar } = useStore()
+  const { currentUser, logout, loadUser, updateAvatar, lang, setLang } = useStore()
+  const t = useT()
   const pathname = usePathname()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
@@ -29,9 +31,9 @@ export default function Navbar() {
   }
 
   const navLinks = [
-    { href: "/feed", label: "News Feed" },
-    { href: "/leaderboard", label: "Dashboard" },
-    { href: "/dashboard", label: "My Page" },
+    { href: "/feed",        label: t.nav_feed },
+    { href: "/leaderboard", label: t.nav_dashboard },
+    { href: "/dashboard",   label: t.nav_mypage },
   ]
 
   return (
@@ -82,12 +84,32 @@ export default function Navbar() {
             )
           })}
 
+          {/* Language switcher */}
+          <div className="ml-1 flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1">
+            <button
+              onClick={() => setLang("vi")}
+              title="Tiếng Việt"
+              className={"flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold transition " + (lang === "vi" ? "bg-white shadow-sm text-slate-800" : "text-slate-400 hover:text-slate-600")}
+            >
+              <span className="text-base leading-none">🇻🇳</span>
+              <span className="hidden sm:inline">VI</span>
+            </button>
+            <button
+              onClick={() => setLang("ja")}
+              title="日本語"
+              className={"flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold transition " + (lang === "ja" ? "bg-white shadow-sm text-slate-800" : "text-slate-400 hover:text-slate-600")}
+            >
+              <span className="text-base leading-none">🇯🇵</span>
+              <span className="hidden sm:inline">JA</span>
+            </button>
+          </div>
+
           {/* Add Post CTA */}
           <a
             href="/post"
             className="ml-2 flex items-center gap-1.5 rounded-full bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 hover:shadow-lg"
           >
-            + Add Post
+            {t.nav_addpost}
           </a>
 
           {currentUser && (
@@ -113,7 +135,7 @@ export default function Navbar() {
                 <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
                   {uploading
                     ? <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    : <span className="text-[11px]">📷</span>
+                    : <span className="text-[11px]" title={t.nav_change_photo}>📷</span>
                   }
                 </div>
               </button>
@@ -138,7 +160,7 @@ export default function Navbar() {
                 onClick={handleLogout}
                 className="rounded-full px-3 py-1.5 text-xs text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
               >
-                Logout
+                {t.nav_logout}
               </button>
             </div>
           )}
