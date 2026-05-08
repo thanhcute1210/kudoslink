@@ -37,12 +37,16 @@ function getInitials(name: string): string {
 export default function FeedPage() {
   useAuthGuard()
   const {
-    posts, currentUser, addReaction, removeReaction,
+    posts, profiles, currentUser, addReaction, removeReaction,
     loadUser, loadProfiles, loadPosts, loadMorePosts,
     postsHasMore, postsLoading,
     subscribeRealtime, unsubscribeRealtime,
     newPostsAvailable, dismissNewPosts,
   } = useStore()
+
+  function getProfileAvatar(name: string): string | undefined {
+    return profiles.find(p => p.full_name === name)?.avatar ?? undefined
+  }
   const [myReactions, setMyReactions] = useState<Record<string, string[]>>({})
   const [showPicker, setShowPicker] = useState<number | null>(null)
   const [toast, setToast] = useState("")
@@ -240,6 +244,8 @@ export default function FeedPage() {
               const myR = myReactions[String(p.id)] || []
               const isForMe = p.to === currentUser?.full_name
               const toInitials = p.to.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()
+              const fromAvatarUrl = getProfileAvatar(p.from)
+              const toAvatarUrl = getProfileAvatar(p.to)
               return (
                 <article
                   key={p.id}
@@ -254,9 +260,16 @@ export default function FeedPage() {
                   <div className={"flex items-center justify-between px-6 pt-5 pb-4 " + (isForMe ? "bg-gradient-to-r from-blue-50/60 to-transparent" : "")}>
                     <div className="flex items-center gap-3">
                       {/* From avatar */}
-                      <div className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-md " + p.fromColor}>
-                        {p.fromAvatar}
-                      </div>
+                      {fromAvatarUrl ? (
+                        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full shadow-md">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={fromAvatarUrl} alt={p.from} className="h-full w-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-md " + p.fromColor}>
+                          {p.fromAvatar}
+                        </div>
+                      )}
                       {/* Arrow + to avatar */}
                       <div className="flex items-center gap-2">
                         <div>
@@ -264,9 +277,16 @@ export default function FeedPage() {
                           <div className="text-xs text-slate-400">{p.fromOffice}</div>
                         </div>
                         <span className="text-slate-300 text-lg mx-1">→</span>
-                        <div className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-md " + (isForMe ? "bg-gradient-to-br from-blue-500 to-indigo-500" : "bg-gradient-to-br from-slate-400 to-slate-500")}>
-                          {toInitials}
-                        </div>
+                        {toAvatarUrl ? (
+                          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full shadow-md">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={toAvatarUrl} alt={p.to} className="h-full w-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-md " + (isForMe ? "bg-gradient-to-br from-blue-500 to-indigo-500" : "bg-gradient-to-br from-slate-400 to-slate-500")}>
+                            {toInitials}
+                          </div>
+                        )}
                         <div>
                           <div className={"text-sm font-bold leading-tight " + (isForMe ? "text-blue-700" : "text-slate-900")}>{p.to}</div>
                           <div className="text-xs text-slate-400">{p.toOffice}</div>

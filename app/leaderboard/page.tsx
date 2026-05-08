@@ -145,9 +145,16 @@ export default function LeaderboardPage() {
               <div key={e.id} className={"relative overflow-hidden rounded-[2rem] border bg-white/85 p-6 text-center shadow-xl backdrop-blur-xl transition hover:-translate-y-1 " + (i === 1 ? "border-amber-200 shadow-amber-100" : "border-white/80")}>
                 <div className={"absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl " + (i === 1 ? "bg-amber-200/60" : "bg-blue-200/40")} />
                 <div className="relative">
-                  <div className={"mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br text-lg font-bold text-white shadow-lg " + getColor(i)}>
-                    {getInitials(e.full_name)}
-                  </div>
+                  {e.avatar ? (
+                    <div className="mx-auto mb-4 h-16 w-16 overflow-hidden rounded-full shadow-lg ring-2 ring-white">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={e.avatar} alt={e.full_name} className="h-full w-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className={"mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br text-lg font-bold text-white shadow-lg " + getColor(i)}>
+                      {getInitials(e.full_name)}
+                    </div>
+                  )}
                   <div className="mb-2 text-3xl">{i === 1 ? "🥇" : i === 0 ? "🥈" : "🥉"}</div>
                   <div className="text-lg font-bold text-slate-950">{e.full_name}</div>
                   <div className="mt-1 text-sm text-slate-500">{e.office} · {e.department}</div>
@@ -216,9 +223,16 @@ export default function LeaderboardPage() {
                     #{index + 1}
                   </div>
                   <div className="col-span-2 flex items-center gap-3">
-                    <div className={"flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white shadow-sm " + getColor(index)}>
-                      {getInitials(e.full_name)}
-                    </div>
+                    {e.avatar ? (
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-sm">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={e.avatar} alt={e.full_name} className="h-full w-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white shadow-sm " + getColor(index)}>
+                        {getInitials(e.full_name)}
+                      </div>
+                    )}
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-slate-950">{e.full_name}</span>

@@ -82,9 +82,16 @@ export default function Navbar() {
           {currentUser && (
             <div className="ml-3 flex items-center gap-2 border-l border-slate-200 pl-3">
               {/* Avatar */}
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-sm">
-                {currentUser.full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
-              </div>
+              {currentUser.avatar ? (
+                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full shadow-sm ring-2 ring-blue-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={currentUser.avatar} alt={currentUser.full_name} className="h-full w-full object-cover" />
+                </div>
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-sm">
+                  {currentUser.full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+                </div>
+              )}
               <div className="text-right">
                 <div className="text-xs font-bold leading-tight text-slate-700">
                   {currentUser.full_name}

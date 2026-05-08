@@ -1,7 +1,7 @@
 "use client"
 import Navbar from "@/components/ui/navbar"
 import { useStore } from "@/lib/store"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useAuthGuard } from "@/lib/useAuthGuard"
 import { useCountUp } from "@/lib/useCountUp"
 
@@ -35,9 +35,28 @@ function getColor(index: number): string {
 
 export default function DashboardPage() {
   useAuthGuard()
-  const { currentUser, profiles, posts, loadUser, loadProfiles, loadPosts, myBudget } = useStore()
+  const { currentUser, profiles, posts, loadUser, loadProfiles, loadPosts, myBudget, updateAvatar } = useStore()
   const [isLoading, setIsLoading] = useState(true)
   const [barsMounted, setBarsMounted] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarError("File quá lớn. Tối đa 2 MB.")
+      return
+    }
+    setAvatarUploading(true)
+    setAvatarError("")
+    const { error } = await updateAvatar(file)
+    setAvatarUploading(false)
+    if (error) setAvatarError(error)
+    // Reset so same file can be re-picked
+    e.target.value = ""
+  }
 
   useEffect(() => {
     Promise.all([loadUser(), loadProfiles(), loadPosts()]).finally(() => {
@@ -87,9 +106,42 @@ export default function DashboardPage() {
         <div className="animate-fade-in-up relative mb-8 overflow-hidden rounded-[2rem] border border-white/70 bg-white/80 p-7 shadow-xl shadow-blue-100/50 backdrop-blur-xl">
           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-300/40 blur-2xl" />
           <div className="relative flex items-center gap-6">
-            <div className={"flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-2xl font-bold text-white shadow-lg " + getColor(myRank)}>
-              {getInitials(currentUser?.full_name || "?")}
-            </div>
+            {/* Clickable avatar with upload overlay */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="group relative h-20 w-20 shrink-0 rounded-full focus:outline-none"
+              title="Đổi ảnh đại diện"
+            >
+              {currentUser?.avatar ? (
+                <div className="h-20 w-20 overflow-hidden rounded-full shadow-lg ring-2 ring-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={currentUser.avatar} alt={currentUser.full_name} className="h-full w-full object-cover" />
+                </div>
+              ) : (
+                <div className={"flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br text-2xl font-bold text-white shadow-lg " + getColor(myRank)}>
+                  {getInitials(currentUser?.full_name || "?")}
+                </div>
+              )}
+              {/* Hover overlay */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                {avatarUploading ? (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <>
+                    <span className="text-lg">📷</span>
+                    <span className="mt-0.5 text-[10px] font-bold text-white">Đổi ảnh</span>
+                  </>
+                )}
+              </div>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
             <div className="flex-1">
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-950">{currentUser?.full_name}</h1>
@@ -105,6 +157,9 @@ export default function DashboardPage() {
                 {currentUser?.position && <> · {currentUser.position}</>}
               </p>
               <p className="mt-1 text-sm text-slate-400">{currentUser?.email}</p>
+              {avatarError && (
+                <p className="mt-2 text-xs font-semibold text-red-500">{avatarError}</p>
+              )}
             </div>
           </div>
         </div>

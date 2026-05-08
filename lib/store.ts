@@ -72,6 +72,8 @@ type Store = {
 
   myBudget: number
 
+  updateAvatar: (file: File) => Promise<{ error?: string }>
+
   // Real-time
   realtimeChannel: RealtimeChannel | null
   newPostsAvailable: boolean
@@ -295,6 +297,33 @@ export const useStore = create<Store>()((set, get) => ({
   },
 
   myBudget: 300,
+
+  // ─── Avatar upload ────────────────────────────────────────────────────────
+  updateAvatar: async (file: File) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: "Not logged in" }
+
+    const ext = file.name.split(".").pop() || "jpg"
+    const path = `${user.id}/avatar.${ext}`
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true, contentType: file.type })
+
+    if (uploadError) return { error: uploadError.message }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(path)
+
+    // Add cache-busting so browser picks up the new image immediately
+    const urlWithBust = publicUrl + "?t=" + Date.now()
+
+    await supabase.from("profiles").update({ avatar: urlWithBust }).eq("id", user.id)
+    await get().loadUser()
+    await get().loadProfiles()
+    return {}
+  },
 
   // ─── Real-time ────────────────────────────────────────────────────────────
   realtimeChannel: null,
