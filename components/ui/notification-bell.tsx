@@ -16,19 +16,24 @@ export function NotificationBell() {
   const { notifications, unreadCount, loadNotifications, markAllRead, markRead } = useStore()
   const [open, setOpen] = useState(false)
   const [permissionState, setPermissionState] = useState<NotificationPermission>("default")
+  const [permAsked, setPermAsked] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadNotifications()
-    // Check & request browser notification permission
+    // Only READ the current state — do NOT auto-request
     if (typeof window !== "undefined" && "Notification" in window) {
       setPermissionState(Notification.permission)
-      if (Notification.permission === "default") {
-        Notification.requestPermission().then(p => setPermissionState(p))
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  async function handleEnableNotifications() {
+    if (!("Notification" in window)) return
+    setPermAsked(true)
+    const result = await Notification.requestPermission()
+    setPermissionState(result)
+  }
 
   // Close on outside click
   useEffect(() => {
@@ -62,22 +67,39 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-fade-in-up">
           {/* Permission banner */}
-          {permissionState === "default" && (
+          {permissionState === "default" && !permAsked && (
             <div className="flex items-center gap-2 border-b border-amber-100 bg-amber-50 px-4 py-2.5">
               <span className="text-base">🔔</span>
-              <p className="flex-1 text-xs text-amber-800">Cho phép thông báo desktop để không bỏ lỡ lời khen</p>
+              <p className="flex-1 text-xs text-amber-800">Bật thông báo desktop để không bỏ lỡ lời khen</p>
               <button
-                onClick={() => Notification.requestPermission().then(p => setPermissionState(p))}
+                onClick={handleEnableNotifications}
                 className="shrink-0 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white hover:bg-amber-600 transition"
               >
                 Bật
               </button>
             </div>
           )}
+          {/* Browser blocked auto-prompt — guide user to address bar */}
+          {permissionState === "default" && permAsked && (
+            <div className="border-b border-amber-100 bg-amber-50 px-4 py-3">
+              <p className="text-xs font-semibold text-amber-800">Trình duyệt đang chặn popup quyền.</p>
+              <p className="mt-1 text-xs text-amber-700">
+                Nhìn lên thanh địa chỉ, bấm vào icon 🔒 hoặc 🔔 → chọn <strong>Cho phép thông báo</strong> → tải lại trang.
+              </p>
+            </div>
+          )}
+          {permissionState === "granted" && (
+            <div className="flex items-center gap-2 border-b border-emerald-100 bg-emerald-50 px-4 py-2.5">
+              <span className="text-base">✅</span>
+              <p className="text-xs font-semibold text-emerald-700">Thông báo desktop đã được bật!</p>
+            </div>
+          )}
           {permissionState === "denied" && (
-            <div className="flex items-center gap-2 border-b border-red-100 bg-red-50 px-4 py-2.5">
-              <span className="text-base">🚫</span>
-              <p className="text-xs text-red-700">Thông báo desktop bị chặn. Vào cài đặt trình duyệt để bật lại.</p>
+            <div className="border-b border-red-100 bg-red-50 px-4 py-3">
+              <p className="text-xs font-semibold text-red-700">🚫 Thông báo desktop đang bị chặn</p>
+              <p className="mt-1 text-xs text-red-600">
+                Bấm vào icon 🔒 trên thanh địa chỉ → <strong>Cài đặt trang web</strong> → bật lại Thông báo → tải lại trang.
+              </p>
             </div>
           )}
 
