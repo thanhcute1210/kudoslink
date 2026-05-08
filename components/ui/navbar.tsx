@@ -84,26 +84,6 @@ export default function Navbar() {
             )
           })}
 
-          {/* Language switcher */}
-          <div className="ml-1 flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1">
-            <button
-              onClick={() => setLang("vi")}
-              title="Tiếng Việt"
-              className={"flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold transition " + (lang === "vi" ? "bg-white shadow-sm text-slate-800" : "text-slate-400 hover:text-slate-600")}
-            >
-              <span className="text-base leading-none">🇻🇳</span>
-              <span className="hidden sm:inline">VI</span>
-            </button>
-            <button
-              onClick={() => setLang("ja")}
-              title="日本語"
-              className={"flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold transition " + (lang === "ja" ? "bg-white shadow-sm text-slate-800" : "text-slate-400 hover:text-slate-600")}
-            >
-              <span className="text-base leading-none">🇯🇵</span>
-              <span className="hidden sm:inline">JA</span>
-            </button>
-          </div>
-
           {/* Add Post CTA */}
           <a
             href="/post"
@@ -162,6 +142,26 @@ export default function Navbar() {
               >
                 {t.nav_logout}
               </button>
+
+              {/* Language switcher */}
+              <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1">
+                <button
+                  onClick={() => setLang("vi")}
+                  title="Tiếng Việt"
+                  className={"flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold transition " + (lang === "vi" ? "bg-white shadow-sm text-slate-800" : "text-slate-400 hover:text-slate-600")}
+                >
+                  <span className="text-base leading-none">🇻🇳</span>
+                  <span className="hidden sm:inline">VI</span>
+                </button>
+                <button
+                  onClick={() => setLang("ja")}
+                  title="日本語"
+                  className={"flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold transition " + (lang === "ja" ? "bg-white shadow-sm text-slate-800" : "text-slate-400 hover:text-slate-600")}
+                >
+                  <span className="text-base leading-none">🇯🇵</span>
+                  <span className="hidden sm:inline">JA</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
