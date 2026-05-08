@@ -17,6 +17,7 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [permissionState, setPermissionState] = useState<NotificationPermission>("default")
   const [permAsked, setPermAsked] = useState(false)
+  const [showGranted, setShowGranted] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -33,6 +34,10 @@ export function NotificationBell() {
     setPermAsked(true)
     const result = await Notification.requestPermission()
     setPermissionState(result)
+    if (result === "granted") {
+      setShowGranted(true)
+      setTimeout(() => setShowGranted(false), 3000)
+    }
   }
 
   // Close on outside click
@@ -88,7 +93,7 @@ export function NotificationBell() {
               </p>
             </div>
           )}
-          {permissionState === "granted" && (
+          {permissionState === "granted" && showGranted && (
             <div className="flex items-center gap-2 border-b border-emerald-100 bg-emerald-50 px-4 py-2.5">
               <span className="text-base">✅</span>
               <p className="text-xs font-semibold text-emerald-700">Thông báo desktop đã được bật!</p>
