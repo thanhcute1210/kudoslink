@@ -111,17 +111,17 @@ export default function FeedPage() {
 
   if (isLoading) {
     return (
-      <div className="relative min-h-screen bg-[radial-gradient(circle_at_top_left,#DBEAFE_0,#F8FAFC_34%,#FFFFFF_70%)]">
+      <div className="relative min-h-screen bg-[radial-gradient(circle_at_top_left,#e0fafa_0,#F8FAFC_34%,#FFFFFF_70%)]">
         <Navbar />
         <div className="flex items-center justify-center py-40">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-[#27D6D8]" />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-50 text-slate-900">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f0f9ff] via-white to-[#f0fafa] text-slate-900">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-28 left-10 h-80 w-80 rounded-full bg-blue-300/50 blur-3xl" />
         <div className="absolute top-40 right-0 h-96 w-96 rounded-full bg-emerald-300/35 blur-3xl" />
@@ -174,7 +174,7 @@ export default function FeedPage() {
                 </div>
               </div>
             </div>
-            <a href="/post" className="inline-flex shrink-0 items-center justify-center rounded-full bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-200 hover:bg-blue-700">
+            <a href="/post" className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#24243F] px-5 py-3 text-sm font-bold text-white shadow-md shadow-[#27D6D8]/20 hover:bg-[#1a1a30]">
               + Add Post
             </a>
           </div>
@@ -187,7 +187,7 @@ export default function FeedPage() {
               onClick={() => setFilterCategory("")}
               className={"rounded-full px-4 py-2 text-xs font-bold ring-1 transition " + (
                 filterCategory === ""
-                  ? "bg-slate-900 text-white ring-slate-900"
+                  ? "bg-[#24243F] text-white ring-[#24243F]"
                   : "bg-white text-slate-600 ring-slate-200 hover:bg-slate-50"
               )}
             >
@@ -199,8 +199,8 @@ export default function FeedPage() {
                 onClick={() => setFilterCategory(filterCategory === cat ? "" : cat)}
                 className={"rounded-full px-4 py-2 text-xs font-bold ring-1 transition " + (
                   filterCategory === cat
-                    ? "bg-blue-600 text-white ring-blue-600"
-                    : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50 hover:text-blue-700"
+                    ? "bg-[#24243F] text-white ring-[#24243F]"
+                    : "bg-white text-slate-600 ring-slate-200 hover:bg-[#e0fafa] hover:text-[#24243F]"
                 )}
               >
                 {cat} ({categoryCounts[cat]})
@@ -213,7 +213,7 @@ export default function FeedPage() {
         {newPostsAvailable && (
           <button
             onClick={() => { loadPosts(true); dismissNewPosts() }}
-            className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 animate-fade-in-up hover:bg-blue-700 transition"
+            className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#24243F] py-3 text-sm font-bold text-white shadow-lg shadow-[#27D6D8]/20 animate-fade-in-up hover:bg-[#1a1a30] transition"
           >
             <span className="animate-bounce">✨</span>
             New appreciations posted! Click to refresh
@@ -230,7 +230,7 @@ export default function FeedPage() {
                 <p className="text-slate-500 text-sm">
                   {filterCategory ? `No posts in "${filterCategory}" yet.` : "No posts yet. Be the first to appreciate someone!"}
                 </p>
-                <a href="/post" className="mt-4 inline-flex rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700">
+                <a href="/post" className="mt-4 inline-flex rounded-full bg-[#24243F] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#1a1a30]">
                   + Add Post
                 </a>
               </div>
@@ -279,7 +279,7 @@ export default function FeedPage() {
                         +{p.points} pts
                       </div>
                       {isForMe && (
-                        <span className="rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-bold text-white">For you ✨</span>
+                        <span className="rounded-full bg-[#24243F] px-2.5 py-0.5 text-xs font-bold text-white">For you ✨</span>
                       )}
                     </div>
                   </div>
@@ -314,7 +314,7 @@ export default function FeedPage() {
                         <button
                           key={emoji}
                           onClick={() => handleReact(p.id, emoji)}
-                          className={"flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition " + (myR.includes(emoji) ? "bg-blue-100 text-blue-700 ring-blue-200" : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50") + (poppingReaction === `${p.id}-${emoji}` ? " animate-reaction-pop" : "")}
+                          className={"flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition " + (myR.includes(emoji) ? "bg-blue-100 text-blue-700 ring-blue-200" : "bg-white text-slate-600 ring-slate-200 hover:bg-[#e0fafa]") + (poppingReaction === `${p.id}-${emoji}` ? " animate-reaction-pop" : "")}
                         >
                           <span>{emoji}</span>
                           <span>{count}</span>
@@ -348,11 +348,11 @@ export default function FeedPage() {
                 <button
                   onClick={loadMorePosts}
                   disabled={postsLoading}
-                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 shadow-sm transition hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 shadow-sm transition hover:bg-[#e0fafa] hover:text-[#24243F] hover:border-blue-200 disabled:opacity-50"
                 >
                   {postsLoading ? (
                     <>
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-200 border-t-[#27D6D8]" />
                       Loading...
                     </>
                   ) : (
@@ -427,7 +427,7 @@ export default function FeedPage() {
                       <div className="mb-1 flex items-center justify-between text-xs">
                         <button
                           onClick={() => setFilterCategory(filterCategory === cat ? "" : cat)}
-                          className={"font-semibold transition hover:text-blue-600 " + (filterCategory === cat ? "text-blue-600" : "text-slate-700")}
+                          className={"font-semibold transition hover:text-[#24243F] " + (filterCategory === cat ? "text-blue-600" : "text-slate-700")}
                         >
                           {cat}
                         </button>

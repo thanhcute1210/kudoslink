@@ -73,7 +73,7 @@ export default function PostPage() {
 
   if (submitted) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-50 px-6">
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#f0f9ff] via-white to-[#f0fafa] px-6">
         <ConfettiTrigger active={submitted} />
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute -top-28 left-10 h-80 w-80 rounded-full bg-blue-300/50 blur-3xl" />
@@ -96,7 +96,7 @@ export default function PostPage() {
           )}
           <p className="mt-1 text-xs text-slate-400">Leaderboard and feed updated!</p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <button onClick={() => router.push("/feed")} className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-200 hover:bg-blue-700">
+            <button onClick={() => router.push("/feed")} className="rounded-full bg-[#24243F] px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-[#27D6D8]/20 hover:bg-[#1a1a30]">
               View Feed
             </button>
             <button onClick={() => router.push("/leaderboard")} className="rounded-full bg-amber-50 px-5 py-2.5 text-sm font-bold text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100">
@@ -115,7 +115,7 @@ export default function PostPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-50 text-slate-900">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f0f9ff] via-white to-[#f0fafa] text-slate-900">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-28 left-10 h-80 w-80 rounded-full bg-blue-300/50 blur-3xl" />
         <div className="absolute top-40 right-0 h-96 w-96 rounded-full bg-emerald-300/35 blur-3xl" />
@@ -147,7 +147,7 @@ export default function PostPage() {
               {/* To */}
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">To</label>
-                <select value={to} onChange={(e) => setTo(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100">
+                <select value={to} onChange={(e) => setTo(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#27D6D8] focus:ring-4 focus:ring-[#27D6D8]/20">
                   <option value="">Select employee...</option>
                   {otherProfiles.map((p) => (
                     <option key={p.id} value={p.full_name}>{p.full_name} ({p.office} · {p.department})</option>
@@ -158,19 +158,19 @@ export default function PostPage() {
               {/* Title */}
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">Title</label>
-                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Great support on M&A research" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100" />
+                <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Great support on M&A research" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#27D6D8] focus:ring-4 focus:ring-[#27D6D8]/20" />
               </div>
 
               {/* Message */}
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">Message</label>
-                <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Describe what they did, why it was valuable, and how it helped the team..." rows={5} className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100" />
+                <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Describe what they did, why it was valuable, and how it helped the team..." rows={5} className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none focus:border-[#27D6D8] focus:ring-4 focus:ring-[#27D6D8]/20" />
               </div>
 
               {/* Category */}
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100">
+                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#27D6D8] focus:ring-4 focus:ring-[#27D6D8]/20">
                   {categories.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
@@ -180,7 +180,7 @@ export default function PostPage() {
                 <label className="mb-2 block text-sm font-bold text-slate-700">
                   Company Value <span className="text-slate-400 font-normal">(optional)</span>
                 </label>
-                <select value={selectedValueId} onChange={(e) => setSelectedValueId(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100">
+                <select value={selectedValueId} onChange={(e) => setSelectedValueId(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#27D6D8] focus:ring-4 focus:ring-[#27D6D8]/20">
                   <option value="">Select a company value...</option>
                   {companyValues.map((v) => (
                     <option key={v.id} value={v.id}>{v.icon} {v.title}</option>
@@ -195,9 +195,9 @@ export default function PostPage() {
                   {pointOptions.map((p) => (
                     <button key={p} onClick={() => setSelectedPoints(p)} disabled={p > remaining}
                       className={"rounded-full px-4 py-2 text-sm font-bold ring-1 transition " + (
-                        selectedPoints === p ? "bg-blue-600 text-white ring-blue-600 shadow-md" :
+                        selectedPoints === p ? "bg-[#24243F] text-white ring-[#24243F] shadow-md" :
                         p > remaining ? "opacity-40 cursor-not-allowed bg-white text-slate-400 ring-slate-200" :
-                        "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50 hover:text-blue-700"
+                        "bg-white text-slate-600 ring-slate-200 hover:bg-[#e0fafa] hover:text-[#24243F]"
                       )}>
                       {p} pts
                     </button>
@@ -209,7 +209,7 @@ export default function PostPage() {
                 <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 ring-1 ring-red-100">{error}</div>
               )}
 
-              <button onClick={handleSubmit} disabled={loading} className="w-full rounded-2xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-200 transition hover:bg-blue-700 disabled:opacity-60">
+              <button onClick={handleSubmit} disabled={loading} className="w-full rounded-2xl bg-[#24243F] py-3.5 text-sm font-bold text-white shadow-md shadow-[#27D6D8]/20 transition hover:bg-[#1a1a30] disabled:opacity-60">
                 {loading ? "Sending..." : "Send Appreciation · +" + selectedPoints + " pts"}
               </button>
             </div>
@@ -226,7 +226,7 @@ export default function PostPage() {
                     className={"w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-sm transition ring-1 " + (
                       selectedValueId === v.id
                         ? "bg-blue-50 text-blue-700 ring-blue-200 font-semibold"
-                        : "bg-slate-50 text-slate-600 ring-slate-200 hover:bg-blue-50 hover:text-blue-600"
+                        : "bg-slate-50 text-slate-600 ring-slate-200 hover:bg-[#e0fafa] hover:text-[#24243F]"
                     )}>
                     <span className="text-base">{v.icon}</span>
                     <span>{v.title}</span>
@@ -261,7 +261,7 @@ export default function PostPage() {
                   <span className="font-bold text-slate-700">{currentUser?.budget_used || 0} / {myBudget} pts</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-2 rounded-full bg-blue-500 transition-all" style={{ width: Math.min(((currentUser?.budget_used || 0) / myBudget) * 100, 100) + "%" }} />
+                  <div className="h-2 rounded-full bg-[#27D6D8] transition-all" style={{ width: Math.min(((currentUser?.budget_used || 0) / myBudget) * 100, 100) + "%" }} />
                 </div>
                 <div className="mt-2 text-xs text-slate-400 text-right">{remaining} pts remaining</div>
               </div>

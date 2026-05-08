@@ -77,7 +77,7 @@ export default function MyPage() {
   const myIndex = [...profiles].sort((a, b) => b.points - a.points).findIndex(p => p.id === currentUser?.id)
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#DBEAFE_0,#F8FAFC_34%,#FFFFFF_70%)] text-slate-900">
+    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#e0fafa_0,#F8FAFC_34%,#FFFFFF_70%)] text-slate-900">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-28 left-10 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
         <div className="absolute top-40 right-0 h-80 w-80 rounded-full bg-emerald-200/30 blur-3xl" />
@@ -220,7 +220,7 @@ export default function MyPage() {
                 </div>
                 <a
                   href="/post"
-                  className="mt-5 flex w-full items-center justify-center rounded-2xl bg-blue-600 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-200 hover:bg-blue-700"
+                  className="mt-5 flex w-full items-center justify-center rounded-2xl bg-[#24243F] py-2.5 text-sm font-bold text-white shadow-md shadow-[#27D6D8]/20 hover:bg-[#1a1a30]"
                 >
                   + Send Appreciation
                 </a>
@@ -231,7 +231,7 @@ export default function MyPage() {
               <div className="relative">
                 <h2 className="text-base font-bold text-slate-950">Quick Links</h2>
                 <div className="mt-4 space-y-2">
-                  <a href="/feed" className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:ring-blue-100 transition">
+                  <a href="/feed" className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-100 hover:bg-[#e0fafa] hover:text-[#24243F] hover:ring-blue-100 transition">
                     <span>📰</span> News Feed
                   </a>
                   <a href="/leaderboard" className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-100 hover:bg-amber-50 hover:text-amber-700 hover:ring-amber-100 transition">
@@ -252,8 +252,8 @@ export default function MyPage() {
                 onClick={() => setTab("received")}
                 className={"rounded-full px-4 py-2 text-sm font-bold transition ring-1 " + (
                   tab === "received"
-                    ? "bg-blue-600 text-white ring-blue-600 shadow-md"
-                    : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50"
+                    ? "bg-[#24243F] text-white ring-[#24243F] shadow-md"
+                    : "bg-white text-slate-600 ring-slate-200 hover:bg-[#e0fafa]"
                 )}
               >
                 Received ({received.length})
@@ -262,8 +262,8 @@ export default function MyPage() {
                 onClick={() => setTab("sent")}
                 className={"rounded-full px-4 py-2 text-sm font-bold transition ring-1 " + (
                   tab === "sent"
-                    ? "bg-blue-600 text-white ring-blue-600 shadow-md"
-                    : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50"
+                    ? "bg-[#24243F] text-white ring-[#24243F] shadow-md"
+                    : "bg-white text-slate-600 ring-slate-200 hover:bg-[#e0fafa]"
                 )}
               >
                 Sent ({sent.length})
@@ -278,7 +278,7 @@ export default function MyPage() {
               </div>
             )}
             {(tab === "received" ? received : sent).map((p) => (
-              <div key={p.id} className="px-6 py-5 hover:bg-blue-50/30 transition">
+              <div key={p.id} className="px-6 py-5 hover:bg-[#e0fafa]/30 transition">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white shadow-sm " + p.fromColor}>
