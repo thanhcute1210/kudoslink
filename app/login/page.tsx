@@ -61,19 +61,21 @@ export default function LoginPage() {
             <p className="mt-1 text-sm font-semibold text-slate-400">{t.login_subtitle}</p>
 
             {/* Language switcher */}
-            <div className="mt-3 flex justify-center gap-2">
-              <button
-                onClick={() => setLang("vi")}
-                className={"flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition border " + (lang === "vi" ? "border-slate-300 bg-white shadow-sm text-slate-800" : "border-transparent text-slate-400 hover:text-slate-600")}
-              >
-                <span>🇻🇳</span> Tiếng Việt
-              </button>
-              <button
-                onClick={() => setLang("ja")}
-                className={"flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition border " + (lang === "ja" ? "border-slate-300 bg-white shadow-sm text-slate-800" : "border-transparent text-slate-400 hover:text-slate-600")}
-              >
-                <span>🇯🇵</span> 日本語
-              </button>
+            <div className="mt-3 flex justify-center">
+              <div className="flex items-center gap-0.5 rounded-full border border-slate-200 bg-slate-100 p-1">
+                <button
+                  onClick={() => setLang("vi")}
+                  className={"rounded-full px-3 py-1 text-xs font-semibold tracking-wide transition " + (lang === "vi" ? "bg-white shadow-sm text-slate-800" : "text-slate-400 hover:text-slate-600")}
+                >
+                  VN
+                </button>
+                <button
+                  onClick={() => setLang("ja")}
+                  className={"rounded-full px-3 py-1 text-xs font-semibold tracking-wide transition " + (lang === "ja" ? "bg-white shadow-sm text-slate-800" : "text-slate-400 hover:text-slate-600")}
+                >
+                  JP
+                </button>
+              </div>
             </div>
           </div>
 
