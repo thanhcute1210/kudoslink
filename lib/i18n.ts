@@ -3,6 +3,14 @@ export type Lang = "vi" | "ja"
 export type T = typeof vi
 
 export const vi = {
+  // ── Notifications ──────────────────────────────────────────────────────────
+  notif_title:      "Thông báo",
+  notif_empty:      "Chưa có thông báo nào",
+  notif_mark_read:  "Đánh dấu tất cả là đã đọc",
+  notif_new:        "Mới",
+  notif_sent_you:   "đã tặng cho bạn",
+  notif_pts:        "điểm",
+  notif_see_post:   "Xem bài đăng",
   // ── Navbar ─────────────────────────────────────────────────────────────────
   nav_feed:         "Tin tức",
   nav_dashboard:    "Bảng điểm",
@@ -138,6 +146,14 @@ export const vi = {
 }
 
 export const ja: T = {
+  // ── Notifications ──────────────────────────────────────────────────────────
+  notif_title:      "通知",
+  notif_empty:      "通知はまだありません",
+  notif_mark_read:  "すべて既読にする",
+  notif_new:        "新着",
+  notif_sent_you:   "があなたに",
+  notif_pts:        "ポイントを贈りました",
+  notif_see_post:   "投稿を見る",
   // ── Navbar ─────────────────────────────────────────────────────────────────
   nav_feed:         "ニュースフィード",
   nav_dashboard:    "ダッシュボード",

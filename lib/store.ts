@@ -39,6 +39,18 @@ export type Profile = {
   avatar?: string
 }
 
+export type Notification = {
+  id: number
+  user_id: string
+  post_id: number
+  from_name: string
+  from_avatar?: string
+  points: number
+  title: string
+  is_read: boolean
+  created_at: string
+}
+
 export type CompanyValue = {
   id: string
   title: string
@@ -74,6 +86,13 @@ type Store = {
   myBudget: number
 
   updateAvatar: (file: File) => Promise<{ error?: string }>
+
+  // Notifications
+  notifications: Notification[]
+  unreadCount: number
+  loadNotifications: () => Promise<void>
+  markAllRead: () => Promise<void>
+  markRead: (id: number) => Promise<void>
 
   // Language
   lang: Lang
@@ -146,6 +165,8 @@ export const useStore = create<Store>()((set, get) => ({
         isLoggedIn: true,
         myBudget: profile.giving_budget_monthly ?? 300,
       })
+      // Load notifications in background
+      get().loadNotifications()
     }
   },
 
@@ -273,6 +294,18 @@ export const useStore = create<Store>()((set, get) => ({
       .update({ budget_used: (freshUser.budget_used || 0) + postData.points })
       .eq("id", freshUser.id)
 
+    // Insert notification for receiver
+    if (receiverProfile) {
+      await supabase.from("notifications").insert({
+        user_id: receiverProfile.id,
+        post_id: newRow.id,
+        from_name: freshUser.full_name,
+        from_avatar: freshUser.avatar || null,
+        points: postData.points,
+        title: postData.title,
+      })
+    }
+
     await get().loadUser()
     await get().loadProfiles()
   },
@@ -307,6 +340,49 @@ export const useStore = create<Store>()((set, get) => ({
   },
 
   myBudget: 300,
+
+  // ─── Notifications ────────────────────────────────────────────────────────
+  notifications: [],
+  unreadCount: 0,
+
+  loadNotifications: async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(30)
+    if (data) {
+      set({
+        notifications: data as Notification[],
+        unreadCount: data.filter((n: Notification) => !n.is_read).length,
+      })
+    }
+  },
+
+  markAllRead: async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("user_id", user.id)
+      .eq("is_read", false)
+    set(s => ({
+      notifications: s.notifications.map(n => ({ ...n, is_read: true })),
+      unreadCount: 0,
+    }))
+  },
+
+  markRead: async (id: number) => {
+    await supabase.from("notifications").update({ is_read: true }).eq("id", id)
+    set(s => ({
+      notifications: s.notifications.map(n => n.id === id ? { ...n, is_read: true } : n),
+      unreadCount: Math.max(0, s.unreadCount - 1),
+    }))
+  },
 
   // ─── Language ─────────────────────────────────────────────────────────────
   lang: getInitialLang(),
@@ -379,6 +455,21 @@ export const useStore = create<Store>()((set, get) => ({
         { event: "UPDATE", schema: "public", table: "profiles" },
         () => {
           get().loadProfiles()
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications" },
+        async (payload) => {
+          const { currentUser } = get()
+          if (!currentUser) return
+          // Only handle if this notification belongs to the current user
+          if (payload.new.user_id !== currentUser.id) return
+          const notif = payload.new as Notification
+          set(s => ({
+            notifications: [notif, ...s.notifications].slice(0, 30),
+            unreadCount: s.unreadCount + 1,
+          }))
         }
       )
       .subscribe()

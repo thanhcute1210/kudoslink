@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { useStore } from "@/lib/store"
 import { usePathname } from "next/navigation"
 import { useT } from "@/lib/useT"
+import { NotificationBell } from "@/components/ui/notification-bell"
 
 export default function Navbar() {
   const { currentUser, logout, loadUser, updateAvatar, lang, setLang } = useStore()
@@ -92,8 +93,10 @@ export default function Navbar() {
             {t.nav_addpost}
           </a>
 
+          {currentUser && <NotificationBell />}
+
           {currentUser && (
-            <div className="ml-3 flex items-center gap-2 border-l border-slate-200 pl-3">
+            <div className="ml-2 flex items-center gap-2 border-l border-slate-200 pl-3">
               {/* Clickable avatar — click to change photo */}
               <button
                 type="button"
