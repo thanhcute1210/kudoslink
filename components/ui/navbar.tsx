@@ -47,7 +47,7 @@ export default function Navbar() {
               My OneValue
             </span>
             <span className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
-              Internal Recognition
+              Vietnam × Japan
             </span>
           </div>
         </a>

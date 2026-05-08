@@ -60,17 +60,17 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="relative min-h-screen bg-gradient-to-br from-[#f0f9ff] via-white to-[#f0fafa]">
+      <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50">
         <Navbar />
         <div className="flex items-center justify-center py-40">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-[#27D6D8]" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f0f9ff] via-white to-[#f0fafa] text-slate-900">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-50 text-slate-900">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-28 left-10 h-80 w-80 rounded-full bg-blue-300/50 blur-3xl" />
         <div className="absolute top-32 right-0 h-96 w-96 rounded-full bg-emerald-300/35 blur-3xl" />
@@ -156,7 +156,7 @@ export default function DashboardPage() {
             </div>
             <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-1.5 rounded-full bg-[#27D6D8] transition-[width] duration-1000 ease-out"
+                className="h-1.5 rounded-full bg-blue-500 transition-[width] duration-1000 ease-out"
                 style={{ width: (barsMounted ? budgetPercent : 0) + "%" }}
               />
             </div>
@@ -208,12 +208,12 @@ export default function DashboardPage() {
                   <div className="py-8 text-center text-sm text-slate-400">No appreciations yet</div>
                 )}
                 {postsReceived.map((p) => (
-                  <a key={p.id} href={`/feed#post-${p.id}`} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm transition hover:shadow-md hover:border-blue-200 hover:bg-[#e0fafa]/50 group">
+                  <a key={p.id} href={`/feed#post-${p.id}`} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm transition hover:shadow-md hover:border-blue-200 hover:bg-blue-50/50 group">
                     <div className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white " + p.fromColor}>
                       {p.fromAvatar}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-slate-950 group-hover:text-[#24243F] transition-colors">{p.from}</div>
+                      <div className="text-sm font-bold text-slate-950 group-hover:text-blue-700 transition-colors">{p.from}</div>
                       <div className="text-xs text-slate-500 truncate">{p.title}</div>
                       <div className="mt-0.5 text-xs text-slate-400">{p.time}</div>
                     </div>
@@ -237,7 +237,7 @@ export default function DashboardPage() {
                   <h2 className="text-lg font-bold text-slate-950">Appreciation Sent</h2>
                   <p className="text-sm text-slate-500">{postsSent.length} posts you've sent</p>
                 </div>
-                <a href="/post" className="rounded-full bg-[#24243F] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#1a1a30] transition">
+                <a href="/post" className="rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition">
                   + Send
                 </a>
               </div>

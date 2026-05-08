@@ -62,7 +62,7 @@ export default function LeaderboardPage() {
   const animatedMembers = useCountUp(profiles.length)
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f0f9ff] via-white to-[#f0fafa] text-slate-900">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-50 text-slate-900">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-28 left-10 h-80 w-80 rounded-full bg-blue-300/50 blur-3xl" />
         <div className="absolute top-40 right-0 h-96 w-96 rounded-full bg-emerald-300/35 blur-3xl" />
@@ -179,8 +179,8 @@ export default function LeaderboardPage() {
                   onClick={() => setFilterOffice(o)}
                   className={"rounded-full px-4 py-1.5 text-xs font-bold ring-1 transition " + (
                     filterOffice === o
-                      ? "bg-[#24243F] text-white ring-[#24243F] shadow-sm"
-                      : "bg-white text-slate-600 ring-slate-200 hover:bg-[#e0fafa] hover:text-[#24243F]"
+                      ? "bg-blue-600 text-white ring-blue-600 shadow-sm"
+                      : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50 hover:text-blue-700"
                   )}
                 >
                   {o}
@@ -209,7 +209,7 @@ export default function LeaderboardPage() {
                 <div
                   key={e.id}
                   className={"grid min-w-[680px] grid-cols-7 items-center border-b border-slate-100 px-6 py-4 transition last:border-0 " + (
-                    isMe ? "bg-blue-50/70 hover:bg-[#e0fafa]" : "hover:bg-[#e0fafa]/40"
+                    isMe ? "bg-blue-50/70 hover:bg-blue-50" : "hover:bg-blue-50/40"
                   )}
                 >
                   <div className={"text-sm font-bold " + (index === 0 ? "text-amber-600" : index === 1 ? "text-slate-500" : index === 2 ? "text-orange-600" : "text-slate-400")}>
@@ -223,7 +223,7 @@ export default function LeaderboardPage() {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-slate-950">{e.full_name}</span>
                         {isMe && (
-                          <span className="rounded-full bg-[#24243F] px-2 py-0.5 text-xs font-bold text-white">You</span>
+                          <span className="rounded-full bg-blue-600 px-2 py-0.5 text-xs font-bold text-white">You</span>
                         )}
                       </div>
                       <div className="text-xs text-slate-500">{e.department}</div>
