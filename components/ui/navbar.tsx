@@ -85,15 +85,15 @@ export default function Navbar() {
             )
           })}
 
+          {currentUser && <NotificationBell />}
+
           {/* Add Post CTA */}
           <a
             href="/post"
-            className="ml-2 flex items-center gap-1.5 rounded-full bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 hover:shadow-lg"
+            className="ml-1 flex items-center gap-1.5 rounded-full bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 hover:shadow-lg"
           >
             {t.nav_addpost}
           </a>
-
-          {currentUser && <NotificationBell />}
 
           {currentUser && (
             <div className="ml-2 flex items-center gap-2 border-l border-slate-200 pl-3">
