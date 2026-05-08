@@ -129,6 +129,15 @@
   }
 }
 
+/* OneValue Brand Colors */
+:root {
+  --ov-navy: #24243F;
+  --ov-navy-light: #2e2e52;
+  --ov-cyan: #27D6D8;
+  --ov-cyan-light: #e0fafa;
+  --ov-cyan-mid: #a8f0f1;
+}
+
 @keyframes reaction-pop {
   0%   { transform: scale(1); }
   40%  { transform: scale(1.5); }

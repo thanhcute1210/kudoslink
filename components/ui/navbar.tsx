@@ -24,28 +24,30 @@ export default function Navbar() {
   ]
 
   return (
-    <nav className="sticky top-0 z-20 border-b border-white/60 bg-white/75 shadow-sm backdrop-blur-xl">
-      {/* Subtle top shimmer line */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent" />
+    <nav className="sticky top-0 z-20 border-b border-slate-200/80 bg-white shadow-sm">
+      {/* Brand accent line top */}
+      <div className="absolute inset-x-0 top-0 h-0.5" style={{ background: "linear-gradient(to right, #24243F, #27D6D8)" }} />
 
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
 
-        {/* Logo */}
+        {/* Logo — OneValue style */}
         <a href="/leaderboard" className="group flex items-center gap-3">
-          {/* Icon mark */}
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg shadow-blue-200/60 transition-transform group-hover:scale-105">
-            {/* Sparkle dots */}
-            <div className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-white/90 shadow-sm" />
-            <span className="text-base font-black text-white">M</span>
-          </div>
+          {/* SVG logo mark replicating OneValue's navy + cyan triangle */}
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="36" height="36" rx="8" fill="#24243F"/>
+            {/* Cyan triangle accent */}
+            <polygon points="22,8 34,8 34,20" fill="#27D6D8"/>
+            {/* Letter O shape */}
+            <text x="6" y="26" fontSize="18" fontWeight="800" fill="white" fontFamily="sans-serif">OV</text>
+          </svg>
 
           {/* Text */}
           <div className="flex flex-col leading-none">
-            <span className="bg-gradient-to-r from-blue-700 via-blue-600 to-cyan-600 bg-clip-text text-base font-black tracking-tight text-transparent">
+            <span className="text-base font-black tracking-tight" style={{ color: "#24243F" }}>
               My OneValue
             </span>
             <span className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
-              JP × VN
+              Internal Recognition
             </span>
           </div>
         </a>
@@ -58,34 +60,52 @@ export default function Navbar() {
               <a
                 key={href}
                 href={href}
-                className={
-                  "rounded-full px-4 py-2 transition-all duration-150 " +
-                  (isActive
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-200 font-bold"
-                    : "text-slate-600 hover:bg-blue-50 hover:text-blue-700")
+                className="rounded-full px-4 py-2 transition-all duration-150 font-semibold"
+                style={isActive
+                  ? { backgroundColor: "#24243F", color: "white" }
+                  : { color: "#24243F" }
                 }
+                onMouseEnter={e => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = "#e0fafa"
+                    ;(e.currentTarget as HTMLElement).style.color = "#24243F"
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"
+                    ;(e.currentTarget as HTMLElement).style.color = "#24243F"
+                  }
+                }}
               >
                 {label}
               </a>
             )
           })}
 
+          {/* Add Post CTA */}
           <a
             href="/post"
-            className="ml-1 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-2 text-sm font-bold text-white shadow-md shadow-blue-200 transition hover:shadow-lg hover:shadow-blue-300/50 hover:scale-[1.03]"
+            className="ml-2 flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-bold text-white shadow-md transition hover:opacity-90 hover:shadow-lg"
+            style={{ background: "linear-gradient(135deg, #24243F 0%, #27D6D8 100%)" }}
           >
-            <span className="text-base leading-none">+</span> Add Post
+            + Add Post
           </a>
 
           {currentUser && (
-            <div className="ml-2 flex items-center gap-2 border-l border-slate-200 pl-3">
-              {/* User avatar bubble */}
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 text-xs font-bold text-white shadow-sm">
+            <div className="ml-3 flex items-center gap-2 border-l border-slate-200 pl-3">
+              {/* Avatar */}
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm"
+                style={{ background: "linear-gradient(135deg, #24243F, #27D6D8)" }}
+              >
                 {currentUser.full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
               </div>
               <div className="text-right">
-                <div className="text-xs font-bold text-slate-700 leading-tight">{currentUser.full_name}</div>
-                <div className="text-[10px] text-slate-400">{currentUser.role || "member"}</div>
+                <div className="text-xs font-bold leading-tight" style={{ color: "#24243F" }}>
+                  {currentUser.full_name}
+                </div>
+                <div className="text-[10px] text-slate-400">{currentUser.office}</div>
               </div>
               <button
                 onClick={handleLogout}

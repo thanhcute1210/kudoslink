@@ -32,25 +32,29 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center px-6">
+    <div className="relative min-h-screen flex items-center justify-center px-6" style={{ background: "linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #e0fafa 100%)" }}>
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-28 left-10 h-80 w-80 rounded-full bg-blue-300/50 blur-3xl" />
-        <div className="absolute top-40 right-0 h-96 w-96 rounded-full bg-emerald-300/35 blur-3xl" />
-        <div className="absolute bottom-10 left-1/3 h-80 w-80 rounded-full bg-violet-300/30 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#CBD5E1_1px,transparent_1px),linear-gradient(to_bottom,#CBD5E1_1px,transparent_1px)] bg-[size:56px_56px] opacity-[0.08]" />
+        <div className="absolute -top-28 left-10 h-80 w-80 rounded-full blur-3xl" style={{ backgroundColor: "rgba(39,214,216,0.12)" }} />
+        <div className="absolute top-40 right-0 h-96 w-96 rounded-full blur-3xl" style={{ backgroundColor: "rgba(36,36,63,0.06)" }} />
+        <div className="absolute bottom-10 left-1/3 h-80 w-80 rounded-full blur-3xl" style={{ backgroundColor: "rgba(39,214,216,0.08)" }} />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#CBD5E1_1px,transparent_1px),linear-gradient(to_bottom,#CBD5E1_1px,transparent_1px)] bg-[size:56px_56px] opacity-[0.05]" />
       </div>
 
-      <div className="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-8 shadow-2xl shadow-blue-100/70 backdrop-blur-xl">
-        <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-blue-200/50 blur-3xl" />
-        <div className="absolute -left-16 -bottom-16 h-40 w-40 rounded-full bg-amber-200/50 blur-3xl" />
+      <div className="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-white/80 bg-white p-8 shadow-2xl">
+        {/* Top accent bar */}
+        <div className="absolute inset-x-0 top-0 h-1 rounded-t-[2rem]" style={{ background: "linear-gradient(to right, #24243F, #27D6D8)" }} />
 
         <div className="relative">
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-2xl font-bold text-white shadow-lg">
-              M
+            {/* Logo mark */}
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg" style={{ backgroundColor: "#24243F" }}>
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                <polygon points="26,6 38,6 38,18" fill="#27D6D8"/>
+                <text x="5" y="30" fontSize="20" fontWeight="800" fill="white" fontFamily="sans-serif">OV</text>
+              </svg>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950">My OneValue</h1>
-            <p className="mt-1 text-sm font-medium text-slate-500">JP × VN Office</p>
+            <h1 className="text-2xl font-black tracking-tight" style={{ color: "#24243F" }}>My OneValue</h1>
+            <p className="mt-1 text-sm font-semibold text-slate-400">Internal Recognition Platform</p>
           </div>
 
           <div className="space-y-4">
@@ -62,7 +66,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                 placeholder="you@company.com"
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#27D6D8] focus:ring-4 focus:ring-[#27D6D8]/20"
               />
             </div>
 
@@ -74,7 +78,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                 placeholder="••••••••"
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#27D6D8] focus:ring-4 focus:ring-[#27D6D8]/20"
               />
             </div>
 
@@ -87,7 +91,8 @@ export default function LoginPage() {
             <button
               onClick={handleLogin}
               disabled={loading}
-              className="w-full rounded-2xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-200 transition hover:bg-blue-700 disabled:opacity-60"
+              className="w-full rounded-2xl py-3.5 text-sm font-bold text-white shadow-md transition hover:opacity-90 disabled:opacity-60"
+              style={{ background: "linear-gradient(135deg, #24243F 0%, #27D6D8 100%)" }}
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
