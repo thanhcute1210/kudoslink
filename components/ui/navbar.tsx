@@ -60,23 +60,11 @@ export default function Navbar() {
               <a
                 key={href}
                 href={href}
-                className="rounded-full px-4 py-2 transition-all duration-150 font-semibold"
-                style={isActive
-                  ? { backgroundColor: "#24243F", color: "white" }
-                  : { color: "#24243F" }
-                }
-                onMouseEnter={e => {
-                  if (!isActive) {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = "#e0fafa"
-                    ;(e.currentTarget as HTMLElement).style.color = "#24243F"
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!isActive) {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"
-                    ;(e.currentTarget as HTMLElement).style.color = "#24243F"
-                  }
-                }}
+                className={"rounded-full px-4 py-2 transition-all duration-150 font-semibold " + (
+                  isActive
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                )}
               >
                 {label}
               </a>
@@ -86,8 +74,7 @@ export default function Navbar() {
           {/* Add Post CTA */}
           <a
             href="/post"
-            className="ml-2 flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-bold text-white shadow-md transition hover:opacity-90 hover:shadow-lg"
-            style={{ background: "linear-gradient(135deg, #24243F 0%, #27D6D8 100%)" }}
+            className="ml-2 flex items-center gap-1.5 rounded-full bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 hover:shadow-lg"
           >
             + Add Post
           </a>
@@ -95,14 +82,11 @@ export default function Navbar() {
           {currentUser && (
             <div className="ml-3 flex items-center gap-2 border-l border-slate-200 pl-3">
               {/* Avatar */}
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm"
-                style={{ background: "linear-gradient(135deg, #24243F, #27D6D8)" }}
-              >
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-sm">
                 {currentUser.full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
               </div>
               <div className="text-right">
-                <div className="text-xs font-bold leading-tight" style={{ color: "#24243F" }}>
+                <div className="text-xs font-bold leading-tight text-slate-700">
                   {currentUser.full_name}
                 </div>
                 <div className="text-[10px] text-slate-400">{currentUser.office}</div>
