@@ -463,13 +463,35 @@ export const useStore = create<Store>()((set, get) => ({
         async (payload) => {
           const { currentUser } = get()
           if (!currentUser) return
-          // Only handle if this notification belongs to the current user
           if (payload.new.user_id !== currentUser.id) return
           const notif = payload.new as Notification
+
+          // Update in-app state
           set(s => ({
             notifications: [notif, ...s.notifications].slice(0, 30),
             unreadCount: s.unreadCount + 1,
           }))
+
+          // Desktop push notification
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+            const lang = (localStorage.getItem("ov_lang") || "vi") as Lang
+            const body = lang === "ja"
+              ? `${notif.from_name} があなたに +${notif.points}ポイントを贈りました\n「${notif.title}」`
+              : `${notif.from_name} đã tặng cho bạn +${notif.points} điểm\n"${notif.title}"`
+
+            const desktop = new window.Notification("🔔 My OneValue", {
+              body,
+              icon: "/favicon.ico",
+              tag: `ov-notif-${notif.id}`,
+              requireInteraction: false,
+            })
+
+            desktop.onclick = () => {
+              window.focus()
+              window.location.href = `/feed#post-${notif.post_id}`
+              desktop.close()
+            }
+          }
         }
       )
       .subscribe()

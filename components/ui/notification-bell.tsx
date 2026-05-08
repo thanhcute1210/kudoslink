@@ -15,10 +15,18 @@ export function NotificationBell() {
   const t = useT()
   const { notifications, unreadCount, loadNotifications, markAllRead, markRead } = useStore()
   const [open, setOpen] = useState(false)
+  const [permissionState, setPermissionState] = useState<NotificationPermission>("default")
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadNotifications()
+    // Check & request browser notification permission
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setPermissionState(Notification.permission)
+      if (Notification.permission === "default") {
+        Notification.requestPermission().then(p => setPermissionState(p))
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -53,6 +61,26 @@ export function NotificationBell() {
       {/* Dropdown */}
       {open && (
         <div className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-fade-in-up">
+          {/* Permission banner */}
+          {permissionState === "default" && (
+            <div className="flex items-center gap-2 border-b border-amber-100 bg-amber-50 px-4 py-2.5">
+              <span className="text-base">🔔</span>
+              <p className="flex-1 text-xs text-amber-800">Cho phép thông báo desktop để không bỏ lỡ lời khen</p>
+              <button
+                onClick={() => Notification.requestPermission().then(p => setPermissionState(p))}
+                className="shrink-0 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white hover:bg-amber-600 transition"
+              >
+                Bật
+              </button>
+            </div>
+          )}
+          {permissionState === "denied" && (
+            <div className="flex items-center gap-2 border-b border-red-100 bg-red-50 px-4 py-2.5">
+              <span className="text-base">🚫</span>
+              <p className="text-xs text-red-700">Thông báo desktop bị chặn. Vào cài đặt trình duyệt để bật lại.</p>
+            </div>
+          )}
+
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div className="flex items-center gap-2">
