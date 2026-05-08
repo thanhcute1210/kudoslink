@@ -1,11 +1,13 @@
 "use client"
-import { useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useStore } from "@/lib/store"
 import { usePathname } from "next/navigation"
 
 export default function Navbar() {
-  const { currentUser, logout, loadUser } = useStore()
+  const { currentUser, logout, loadUser, updateAvatar } = useStore()
   const pathname = usePathname()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     if (!currentUser) loadUser()
@@ -15,6 +17,15 @@ export default function Navbar() {
   async function handleLogout() {
     await logout()
     window.location.href = "/login"
+  }
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    await updateAvatar(file)
+    setUploading(false)
+    e.target.value = ""
   }
 
   const navLinks = [
@@ -81,23 +92,48 @@ export default function Navbar() {
 
           {currentUser && (
             <div className="ml-3 flex items-center gap-2 border-l border-slate-200 pl-3">
-              {/* Avatar */}
-              {currentUser.avatar ? (
-                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full shadow-sm ring-2 ring-blue-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={currentUser.avatar} alt={currentUser.full_name} className="h-full w-full object-cover" />
+              {/* Clickable avatar — click to change photo */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title="Đổi ảnh đại diện"
+                className="group relative h-9 w-9 shrink-0 rounded-full focus:outline-none"
+              >
+                {currentUser.avatar ? (
+                  <div className="h-9 w-9 overflow-hidden rounded-full shadow-sm ring-2 ring-blue-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={currentUser.avatar} alt={currentUser.full_name} className="h-full w-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-sm">
+                    {currentUser.full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                {/* Hover overlay */}
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                  {uploading
+                    ? <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    : <span className="text-[11px]">📷</span>
+                  }
                 </div>
-              ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-sm">
-                  {currentUser.full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+
+              {/* Name + office | department */}
+              <div className="text-right leading-none">
+                <div className="text-xs font-bold text-slate-700">{currentUser.full_name}</div>
+                <div className="mt-0.5 text-[10px] text-slate-400">
+                  {currentUser.office}{currentUser.department ? ` | ${currentUser.department}` : ""}
                 </div>
-              )}
-              <div className="text-right">
-                <div className="text-xs font-bold leading-tight text-slate-700">
-                  {currentUser.full_name}
-                </div>
-                <div className="text-[10px] text-slate-400">{currentUser.office}</div>
               </div>
+
+              {/* Logout */}
               <button
                 onClick={handleLogout}
                 className="rounded-full px-3 py-1.5 text-xs text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
