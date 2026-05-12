@@ -5,177 +5,372 @@ import { useStore } from "@/lib/store"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
-type Evaluation = {
-  id: string
-  employee_id: string
-  evaluator_id: string
-  evaluation_period: string
-  evaluation_type: string
-  status: string
-  final_score: number
-  total_goal_score: number
-  total_skill_a_score: number
-  total_attitude_score: number
-  created_at: string
-  employee?: { full_name: string; office: string; department: string }
-  evaluator?: { full_name: string }
-}
+const STEPS = ["Thông tin", "Mục tiêu", "Kỹ năng", "Thái độ", "Nhận xét"]
 
-const EVAL_TYPE_LABELS: Record<string, string> = {
-  periodic: "Định kỳ 6 tháng",
-  probation: "Thử việc",
-  contract_change: "Thay đổi HĐ",
-  salary_review: "Tăng lương",
-}
+const SKILLS_A = [
+  { id: "skill_1", label: "Tư duy Logic", weight: 2 },
+  { id: "skill_2", label: "Giải quyết vấn đề", weight: 1 },
+  { id: "skill_3", label: "Chất lượng output", weight: 2 },
+  { id: "skill_4", label: "Tuân thủ deadline", weight: 2 },
+  { id: "skill_5", label: "Horenso", weight: 2 },
+  { id: "skill_6", label: "Tốc độ phản hồi", weight: 2 },
+  { id: "skill_7", label: "Kỹ năng thuyết trình", weight: 1 },
+  { id: "skill_8", label: "Hợp tác nhóm", weight: 1 },
+  { id: "skill_9", label: "Kiến thức ngành", weight: 1 },
+  { id: "skill_10", label: "Tự phát triển", weight: 1 },
+]
 
-const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-slate-100 text-slate-600",
-  submitted: "bg-blue-50 text-blue-700",
-  approved: "bg-emerald-50 text-emerald-700",
-  rejected: "bg-red-50 text-red-700",
-}
+const ATTITUDES = [
+  { id: "attitude_1", label: "Tuân thủ quy định & văn hóa công ty", weight: 2 },
+  { id: "attitude_2", label: "Đi làm đúng giờ", weight: 1 },
+  { id: "attitude_3", label: "Ý thức gắn bó & đóng góp cho công ty", weight: 7 },
+]
 
-function ScoreBadge({ score }: { score: number }) {
-  const color = score >= 4 ? "text-emerald-700 bg-emerald-50 ring-emerald-100"
-    : score >= 3 ? "text-blue-700 bg-blue-50 ring-blue-100"
-    : score >= 2 ? "text-amber-700 bg-amber-50 ring-amber-100"
-    : "text-red-700 bg-red-50 ring-red-100"
-  const label = score >= 4.5 ? "Xuất sắc" : score >= 4 ? "Tốt" : score >= 3 ? "Khá" : score >= 2 ? "Trung bình" : "Yếu"
-  return (
-    <span className={"rounded-full px-2.5 py-1 text-xs font-bold ring-1 " + color}>
-      {score.toFixed(2)} — {label}
-    </span>
-  )
-}
-
-export default function EvaluationListPage() {
+export default function NewEvaluationPage() {
   const { currentUser, loadUser, profiles, loadProfiles } = useStore()
   const router = useRouter()
-  const [evaluations, setEvaluations] = useState<Evaluation[]>([])
-  const [loading, setLoading] = useState(true)
+  const [step, setStep] = useState(0)
+  const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    loadUser()
-    loadProfiles()
-  }, [])
+  // Step 1 - Info
+  const [employeeId, setEmployeeId] = useState("")
+  const [period, setPeriod] = useState("01-06/2026")
+  const [evalType, setEvalType] = useState("periodic")
+  const [hasSubordinates, setHasSubordinates] = useState(false)
+  const [evalDate, setEvalDate] = useState(new Date().toISOString().split("T")[0])
 
-  useEffect(() => {
-    if (currentUser) loadEvaluations()
-  }, [currentUser])
+  // Step 2 - Goals (6 goals)
+  const [goals, setGoals] = useState(Array(6).fill(null).map((_, i) => ({
+    name: "", weight: [0.2, 0.45, 0.1, 0.1, 0.05, 0.1][i],
+    result: "", self_score: 0, mgr_score: 0
+  })))
 
-  async function loadEvaluations() {
-    setLoading(true)
-    const { data } = await supabase
-      .from("evaluations")
-      .select("*")
-      .order("created_at", { ascending: false })
+  // Step 3 - Skills A
+  const [skillsA, setSkillsA] = useState(
+    SKILLS_A.map(s => ({ ...s, comment: "", self_score: 0, mgr_score: 0 }))
+  )
 
-    if (data) {
-      const enriched = data.map(ev => ({
-        ...ev,
-        employee: profiles.find(p => p.id === ev.employee_id),
-        evaluator: profiles.find(p => p.id === ev.evaluator_id),
-      }))
-      setEvaluations(enriched)
+  // Step 4 - Attitudes
+  const [attitudes, setAttitudes] = useState(
+    ATTITUDES.map(a => ({ ...a, comment: "", self_score: 0, mgr_score: 0 }))
+  )
+
+  // Step 5 - Comments
+  const [selfStrengths, setSelfStrengths] = useState("")
+  const [selfImprovements, setSelfImprovements] = useState("")
+  const [selfSatisfaction, setSelfSatisfaction] = useState(0)
+  const [selfIdeas, setSelfIdeas] = useState("")
+  const [selfExpectations, setSelfExpectations] = useState("")
+  const [mgrRisk, setMgrRisk] = useState("")
+  const [mgrContinue, setMgrContinue] = useState("")
+  const [mgrDevelop, setMgrDevelop] = useState("")
+  const [mgrPlan, setMgrPlan] = useState("")
+
+  useEffect(() => { loadUser(); loadProfiles() }, [])
+
+  const employees = profiles.filter(p => p.role === "employee" || p.role === "manager")
+
+  async function handleSubmit() {
+    if (!employeeId || !currentUser) return
+    setSaving(true)
+
+    const goalScore = goals.reduce((sum, g) => sum + g.weight * g.mgr_score, 0)
+    const skillScore = skillsA.reduce((sum, s) => sum + s.weight * s.mgr_score, 0) / 15
+    const attScore = attitudes.reduce((sum, a) => sum + a.weight * a.mgr_score, 0) / 10
+    const finalScore = goalScore * 0.7 + (skillScore + attScore) * 0.3 * 5
+
+    const payload: Record<string, unknown> = {
+      employee_id: employeeId,
+      evaluator_id: currentUser.id,
+      evaluation_period: period,
+      evaluation_type: evalType,
+      status: "draft",
+      total_goal_score: goalScore,
+      total_skill_a_score: skillScore * 5,
+      total_attitude_score: attScore * 5,
+      final_score: finalScore,
+      self_strengths: selfStrengths,
+      self_improvements: selfImprovements,
+      self_satisfaction: selfSatisfaction,
+      self_ideas: selfIdeas,
+      self_expectations: selfExpectations,
+      manager_risk_comment: mgrRisk,
+      manager_continue_working: mgrContinue,
+      manager_develop_skills: mgrDevelop,
+      manager_plan: mgrPlan,
     }
-    setLoading(false)
-  }
 
-  const canCreate = currentUser?.role === "manager" || currentUser?.role === "hr" || currentUser?.role === "admin"
+    goals.forEach((g, i) => {
+      payload[`goal_${i + 1}_name`] = g.name
+      payload[`goal_${i + 1}_weight`] = g.weight
+      payload[`goal_${i + 1}_result`] = g.result
+      payload[`goal_${i + 1}_self_score`] = g.self_score
+      payload[`goal_${i + 1}_mgr_score`] = g.mgr_score
+    })
+
+    skillsA.forEach((s, i) => {
+      payload[`skill_${i + 1}_self`] = s.self_score
+      payload[`skill_${i + 1}_mgr`] = s.mgr_score
+      payload[`skill_${i + 1}_comment`] = s.comment
+    })
+
+    attitudes.forEach((a, i) => {
+      payload[`attitude_${i + 1}_self`] = a.self_score
+      payload[`attitude_${i + 1}_mgr`] = a.mgr_score
+      payload[`attitude_${i + 1}_comment`] = a.comment
+    })
+
+    const { error } = await supabase.from("evaluations").insert(payload)
+    setSaving(false)
+    if (!error) router.push("/evaluation")
+    else alert("Lỗi khi lưu: " + error.message)
+  }
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#DBEAFE_0,#F8FAFC_34%,#FFFFFF_70%)] text-slate-900">
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -top-28 left-10 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
-        <div className="absolute top-40 right-0 h-80 w-80 rounded-full bg-emerald-200/30 blur-3xl" />
-      </div>
       <Navbar />
+      <main className="mx-auto max-w-3xl px-4 py-8">
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        {/* Header */}
-        <div className="relative mb-8 overflow-hidden rounded-[2rem] border border-white/70 bg-white/75 p-7 shadow-xl backdrop-blur-xl">
-          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-200/50 blur-2xl" />
-          <div className="relative flex items-end justify-between gap-4 flex-wrap">
-            <div>
-              <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 ring-1 ring-blue-100">
-                Đánh giá hiệu suất — OVVN
-              </span>
-              <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-950">Danh sách đánh giá</h1>
-              <p className="mt-1 text-sm text-slate-500">{evaluations.length} kết quả đánh giá</p>
+        {/* Progress Steps */}
+        <div className="flex items-center justify-between mb-8">
+          {STEPS.map((s, i) => (
+            <div key={i} className="flex items-center">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold
+                ${i < step ? "bg-emerald-500 text-white" : i === step ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"}`}>
+                {i < step ? "✓" : i + 1}
+              </div>
+              <span className={`ml-1.5 text-xs hidden sm:block ${i === step ? "font-bold text-blue-600" : "text-slate-400"}`}>{s}</span>
+              {i < STEPS.length - 1 && <div className={`mx-2 h-0.5 w-8 ${i < step ? "bg-emerald-400" : "bg-slate-200"}`} />}
             </div>
-            {canCreate && (
-              <button onClick={() => router.push("/evaluation/new")}
-                className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-700">
-                + Tạo đánh giá mới
+          ))}
+        </div>
+
+        <div className="rounded-[2rem] border border-white/70 bg-white/80 p-6 shadow-xl backdrop-blur-xl">
+
+          {/* STEP 0 - Thông tin */}
+          {step === 0 && (
+            <div className="space-y-5">
+              <h2 className="text-xl font-bold text-slate-900">Thông tin đánh giá</h2>
+              <div>
+                <label className="text-sm font-semibold text-slate-700">Nhân viên được đánh giá *</label>
+                <select value={employeeId} onChange={e => setEmployeeId(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                  <option value="">-- Chọn nhân viên --</option>
+                  {employees.map(p => (
+                    <option key={p.id} value={p.id}>{p.full_name} — {p.department}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-slate-700">Kỳ đánh giá</label>
+                  <input value={period} onChange={e => setPeriod(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-700">Ngày đánh giá</label>
+                  <input type="date" value={evalDate} onChange={e => setEvalDate(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-slate-700">Loại đánh giá</label>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {[
+                    { v: "periodic", l: "Định kỳ 6 tháng" },
+                    { v: "probation", l: "Thử việc" },
+                    { v: "contract_change", l: "Thay đổi hợp đồng" },
+                    { v: "salary_review", l: "Tăng lương không định kỳ" },
+                  ].map(opt => (
+                    <button key={opt.v} onClick={() => setEvalType(opt.v)}
+                      className={`rounded-xl px-3 py-2 text-sm font-medium border transition
+                        ${evalType === opt.v ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:border-blue-300"}`}>
+                      {opt.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <input type="checkbox" id="hasSub" checked={hasSubordinates} onChange={e => setHasSubordinates(e.target.checked)}
+                  className="h-4 w-4 rounded" />
+                <label htmlFor="hasSub" className="text-sm text-slate-700">Có quản lý cấp dưới (Senior BA trở lên)?</label>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 1 - Mục tiêu */}
+          {step === 1 && (
+            <div className="space-y-5">
+              <h2 className="text-xl font-bold text-slate-900">I. Mục tiêu công việc (70%)</h2>
+              <p className="text-xs text-slate-500">Điền tối đa 6 mục tiêu. Tổng tỷ trọng = 1.0</p>
+              {goals.map((g, i) => (
+                <div key={i} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-blue-700">Mục tiêu {i + 1}</span>
+                    <span className="text-xs text-slate-400">Tỷ trọng: {(g.weight * 100).toFixed(0)}%</span>
+                  </div>
+                  <input placeholder="Tên mục tiêu" value={g.name}
+                    onChange={e => setGoals(goals.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                  <textarea placeholder="Kết quả thực tế" value={g.result} rows={2}
+                    onChange={e => setGoals(goals.map((x, j) => j === i ? { ...x, result: e.target.value } : x))}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-slate-500">Tự đánh giá (1-5)</label>
+                      <select value={g.self_score}
+                        onChange={e => setGoals(goals.map((x, j) => j === i ? { ...x, self_score: Number(e.target.value) } : x))}
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n === 0 ? "-- Chọn --" : n}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500">Quản lý đánh giá (1-5)</label>
+                      <select value={g.mgr_score}
+                        onChange={e => setGoals(goals.map((x, j) => j === i ? { ...x, mgr_score: Number(e.target.value) } : x))}
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n === 0 ? "-- Chọn --" : n}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* STEP 2 - Kỹ năng */}
+          {step === 2 && (
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-slate-900">II.A. Kỹ năng làm việc</h2>
+              {skillsA.map((s, i) => (
+                <div key={i} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-semibold text-slate-800">{i + 1}. {s.label}</span>
+                    <span className="text-xs text-slate-400">Hệ số: {s.weight}</span>
+                  </div>
+                  <textarea placeholder="Nhận xét của quản lý" value={s.comment} rows={2}
+                    onChange={e => setSkillsA(skillsA.map((x, j) => j === i ? { ...x, comment: e.target.value } : x))}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-slate-500">Tự đánh giá (1-5)</label>
+                      <select value={s.self_score}
+                        onChange={e => setSkillsA(skillsA.map((x, j) => j === i ? { ...x, self_score: Number(e.target.value) } : x))}
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n === 0 ? "-- Chọn --" : n}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500">Quản lý đánh giá (1-5)</label>
+                      <select value={s.mgr_score}
+                        onChange={e => setSkillsA(skillsA.map((x, j) => j === i ? { ...x, mgr_score: Number(e.target.value) } : x))}
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n === 0 ? "-- Chọn --" : n}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* STEP 3 - Thái độ */}
+          {step === 3 && (
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-slate-900">III. Thái độ làm việc</h2>
+              {attitudes.map((a, i) => (
+                <div key={i} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-semibold text-slate-800">{i + 1}. {a.label}</span>
+                    <span className="text-xs text-slate-400">Hệ số: {a.weight}</span>
+                  </div>
+                  <textarea placeholder="Nhận xét" value={a.comment} rows={2}
+                    onChange={e => setAttitudes(attitudes.map((x, j) => j === i ? { ...x, comment: e.target.value } : x))}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-slate-500">Tự đánh giá (1-5)</label>
+                      <select value={a.self_score}
+                        onChange={e => setAttitudes(attitudes.map((x, j) => j === i ? { ...x, self_score: Number(e.target.value) } : x))}
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n === 0 ? "-- Chọn --" : n}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500">Quản lý đánh giá (1-5)</label>
+                      <select value={a.mgr_score}
+                        onChange={e => setAttitudes(attitudes.map((x, j) => j === i ? { ...x, mgr_score: Number(e.target.value) } : x))}
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n === 0 ? "-- Chọn --" : n}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* STEP 4 - Nhận xét */}
+          {step === 4 && (
+            <div className="space-y-5">
+              <h2 className="text-xl font-bold text-slate-900">Nhận xét tổng hợp</h2>
+              <p className="text-xs font-bold text-blue-600 uppercase tracking-wide">Người được đánh giá tự ghi</p>
+              {[
+                { label: "1. Điểm mạnh có thể phát huy", val: selfStrengths, set: setSelfStrengths },
+                { label: "2. Điểm cần cải thiện và điểm yếu", val: selfImprovements, set: setSelfImprovements },
+                { label: "4. Ý tưởng và đề xuất cải thiện công ty", val: selfIdeas, set: setSelfIdeas },
+                { label: "5. Kỳ vọng và cần hướng dẫn từ cấp trên", val: selfExpectations, set: setSelfExpectations },
+              ].map((f, i) => (
+                <div key={i}>
+                  <label className="text-sm font-semibold text-slate-700">{f.label}</label>
+                  <textarea value={f.val} onChange={e => f.set(e.target.value)} rows={3}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                </div>
+              ))}
+              <div>
+                <label className="text-sm font-semibold text-slate-700">3. Mức độ hài lòng với công việc (1-5)</label>
+                <select value={selfSatisfaction} onChange={e => setSelfSatisfaction(Number(e.target.value))}
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                  {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n === 0 ? "-- Chọn --" : n}</option>)}
+                </select>
+              </div>
+
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wide mt-4">Cấp trên trực tiếp ghi</p>
+              {[
+                { label: "1. Rủi ro về chất lượng khi phân công nhiệm vụ?", val: mgrRisk, set: setMgrRisk },
+                { label: "2. Có muốn tiếp tục làm việc với thành viên này? (Yes/No + lý do)", val: mgrContinue, set: setMgrContinue },
+                { label: "3. Muốn thành viên này phát triển kỹ năng gì?", val: mgrDevelop, set: setMgrDevelop },
+                { label: "4. Kế hoạch phát triển cho thành viên này", val: mgrPlan, set: setMgrPlan },
+              ].map((f, i) => (
+                <div key={i}>
+                  <label className="text-sm font-semibold text-slate-700">{f.label}</label>
+                  <textarea value={f.val} onChange={e => f.set(e.target.value)} rows={3}
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="mt-8 flex justify-between">
+            <button onClick={() => step > 0 ? setStep(step - 1) : router.push("/evaluation")}
+              className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+              {step === 0 ? "Hủy" : "← Quay lại"}
+            </button>
+            {step < STEPS.length - 1 ? (
+              <button onClick={() => setStep(step + 1)}
+                disabled={step === 0 && !employeeId}
+                className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-40">
+                Tiếp theo →
+              </button>
+            ) : (
+              <button onClick={handleSubmit} disabled={saving}
+                className="rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-40">
+                {saving ? "Đang lưu..." : "✓ Lưu đánh giá"}
               </button>
             )}
           </div>
         </div>
-
-        {/* List */}
-        {loading ? (
-          <div className="text-center py-16 text-slate-400">Đang tải...</div>
-        ) : evaluations.length === 0 ? (
-          <div className="text-center py-16 rounded-[2rem] border border-white/80 bg-white/85 shadow-xl backdrop-blur-xl">
-            <div className="text-4xl mb-3">📋</div>
-            <p className="text-slate-500 text-sm">Chưa có đánh giá nào</p>
-            {canCreate && (
-              <button onClick={() => router.push("/evaluation/new")}
-                className="mt-4 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700">
-                Tạo đánh giá đầu tiên
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {evaluations.map(ev => (
-              <div key={ev.id} className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-xl backdrop-blur-xl transition hover:-translate-y-0.5">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 text-sm font-bold text-white shadow-sm">
-                      {(ev.employee?.full_name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-950">{ev.employee?.full_name || "Unknown"}</div>
-                      <div className="text-xs text-slate-500">{ev.employee?.office} · {ev.employee?.department}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">Đánh giá bởi: {ev.evaluator?.full_name || "Unknown"}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{ev.evaluation_period}</span>
-                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">{EVAL_TYPE_LABELS[ev.evaluation_type] || ev.evaluation_type}</span>
-                    <span className={"rounded-full px-3 py-1 text-xs font-semibold " + (STATUS_COLORS[ev.status] || "bg-slate-100 text-slate-600")}>{ev.status}</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-                  <div className="rounded-2xl bg-blue-50 px-3 py-2 text-center ring-1 ring-blue-100">
-                    <div className="text-lg font-bold text-blue-700">{ev.total_goal_score?.toFixed(2) || "0.00"}</div>
-                    <div className="text-xs text-blue-600">Mục tiêu (70%)</div>
-                  </div>
-                  <div className="rounded-2xl bg-purple-50 px-3 py-2 text-center ring-1 ring-purple-100">
-                    <div className="text-lg font-bold text-purple-700">{ev.total_skill_a_score?.toFixed(2) || "0.00"}</div>
-                    <div className="text-xs text-purple-600">Kỹ năng</div>
-                  </div>
-                  <div className="rounded-2xl bg-amber-50 px-3 py-2 text-center ring-1 ring-amber-100">
-                    <div className="text-lg font-bold text-amber-700">{ev.total_attitude_score?.toFixed(2) || "0.00"}</div>
-                    <div className="text-xs text-amber-600">Thái độ</div>
-                  </div>
-                  <div className="rounded-2xl bg-emerald-50 px-3 py-2 text-center ring-1 ring-emerald-100">
-                    <div className="text-lg font-bold text-emerald-700">{ev.final_score?.toFixed(2) || "0.00"}</div>
-                    <div className="text-xs text-emerald-600">Điểm tổng</div>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between">
-                  <ScoreBadge score={ev.final_score || 0} />
-                  <span className="text-xs text-slate-400">{new Date(ev.created_at).toLocaleDateString("vi-VN")}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </main>
     </div>
   )
