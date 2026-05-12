@@ -31,11 +31,12 @@ export default function Navbar() {
     e.target.value = ""
   }
 
-  const navLinks = [
-    { href: "/feed",        label: t.nav_feed },
-    { href: "/leaderboard", label: t.nav_dashboard },
-    { href: "/dashboard",   label: t.nav_mypage },
-  ]
+ const navLinks = [
+  { href: "/feed",        label: t.nav_feed },
+  { href: "/leaderboard", label: t.nav_dashboard },
+  { href: "/dashboard",   label: t.nav_mypage },
+  { href: "/evaluation",  label: "📋 Đánh giá" },
+]
 
   return (
     <nav className="sticky top-0 z-20 border-b border-slate-200/80 bg-white shadow-sm">
