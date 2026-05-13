@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react"
 import { useAuthGuard } from "@/lib/useAuthGuard"
 import { useCountUp } from "@/lib/useCountUp"
 import { useT } from "@/lib/useT"
+import { supabase } from "@/lib/supabase"
 
 const BADGES = [
   { name: "Bronze",   min: 0,    max: 400,  color: "bg-orange-100 text-orange-700 ring-orange-200" },
@@ -43,6 +44,29 @@ export default function DashboardPage() {
   const [avatarError, setAvatarError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const t = useT()
+
+  // Password change state
+  const [showPwForm, setShowPwForm] = useState(false)
+  const [pwCurrent, setPwCurrent] = useState("")
+  const [pwNew, setPwNew] = useState("")
+  const [pwConfirm, setPwConfirm] = useState("")
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError, setPwError] = useState("")
+  const [pwSuccess, setPwSuccess] = useState(false)
+
+  async function handlePasswordChange() {
+    setPwError("")
+    if (!pwNew || !pwConfirm) { setPwError("Vui lòng điền đầy đủ thông tin."); return }
+    if (pwNew.length < 8) { setPwError("Mật khẩu mới phải ít nhất 8 ký tự."); return }
+    if (pwNew !== pwConfirm) { setPwError("Mật khẩu xác nhận không khớp."); return }
+    setPwLoading(true)
+    const { error } = await supabase.auth.updateUser({ password: pwNew })
+    setPwLoading(false)
+    if (error) { setPwError(error.message); return }
+    setPwSuccess(true)
+    setPwNew(""); setPwConfirm(""); setPwCurrent("")
+    setTimeout(() => { setPwSuccess(false); setShowPwForm(false) }, 3000)
+  }
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -149,9 +173,15 @@ export default function DashboardPage() {
                 <h1 className="text-2xl font-bold tracking-tight text-slate-950">{currentUser?.full_name}</h1>
                 <span className={"inline-flex rounded-full px-3 py-1 text-xs font-bold ring-1 " + (
                   currentUser?.role === "admin" ? "bg-purple-50 text-purple-700 ring-purple-100" :
+                  currentUser?.role === "hr" ? "bg-pink-50 text-pink-700 ring-pink-100" :
                   currentUser?.role === "manager" ? "bg-amber-50 text-amber-700 ring-amber-100" :
                   "bg-blue-50 text-blue-700 ring-blue-100"
-                )}>{currentUser?.role}</span>
+                )}>{{
+                  admin: "Admin",
+                  hr: "HR",
+                  manager: "Quản lý",
+                  employee: "Nhân viên",
+                }[currentUser?.role || "employee"] || currentUser?.role}</span>
                 <span className={"inline-flex rounded-full px-3 py-1 text-xs font-bold ring-1 " + badge.color}>{badge.name}</span>
               </div>
               <p className="mt-1 text-sm text-slate-500">
@@ -323,6 +353,56 @@ export default function DashboardPage() {
               </div>
             </div>
           </section>
+        </div>
+
+        {/* Password change section */}
+        <div className="animate-fade-in-up mt-6 overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 p-6 shadow-lg backdrop-blur-xl" style={{ animationDelay: "420ms" }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-950">🔒 Đổi mật khẩu</h2>
+              <p className="text-sm text-slate-400 mt-0.5">Cập nhật mật khẩu đăng nhập của bạn</p>
+            </div>
+            <button
+              onClick={() => { setShowPwForm(v => !v); setPwError(""); setPwSuccess(false) }}
+              className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
+            >
+              {showPwForm ? "Đóng" : "Đổi mật khẩu"}
+            </button>
+          </div>
+
+          {showPwForm && (
+            <div className="mt-5 space-y-3 max-w-sm">
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Mật khẩu mới</label>
+                <input
+                  type="password" value={pwNew} onChange={e => setPwNew(e.target.value)}
+                  placeholder="Tối thiểu 8 ký tự"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Xác nhận mật khẩu mới</label>
+                <input
+                  type="password" value={pwConfirm} onChange={e => setPwConfirm(e.target.value)}
+                  placeholder="Nhập lại mật khẩu mới"
+                  onKeyDown={e => e.key === "Enter" && handlePasswordChange()}
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              {pwError && (
+                <div className="rounded-xl bg-red-50 px-3 py-2.5 text-xs font-semibold text-red-600 ring-1 ring-red-100">{pwError}</div>
+              )}
+              {pwSuccess && (
+                <div className="rounded-xl bg-emerald-50 px-3 py-2.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">✓ Đổi mật khẩu thành công!</div>
+              )}
+              <button
+                onClick={handlePasswordChange} disabled={pwLoading}
+                className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50 transition"
+              >
+                {pwLoading ? "Đang cập nhật..." : "Lưu mật khẩu mới"}
+              </button>
+            </div>
+          )}
         </div>
       </main>
     </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useStore } from "@/lib/store"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { useAuthGuard } from "@/lib/useAuthGuard"
 
 const STEPS = ["Thông tin", "Mục tiêu", "Kỹ năng", "Thái độ", "Nhận xét"]
 
@@ -27,6 +28,7 @@ const ATTITUDES = [
 ]
 
 export default function NewEvaluationPage() {
+  useAuthGuard()
   const { currentUser, loadUser, profiles, loadProfiles } = useStore()
   const router = useRouter()
   const [step, setStep] = useState(0)
@@ -67,6 +69,13 @@ export default function NewEvaluationPage() {
   const [mgrPlan, setMgrPlan] = useState("")
 
   useEffect(() => { loadUser(); loadProfiles() }, [])
+
+  // Block non-HR/manager/admin at route level
+  useEffect(() => {
+    if (!currentUser) return
+    const allowed = ["manager", "hr", "admin"]
+    if (!allowed.includes(currentUser.role)) router.replace("/dashboard")
+  }, [currentUser])
 
   const employees = profiles.filter(p => p.role === "employee" || p.role === "manager")
 

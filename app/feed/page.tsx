@@ -89,15 +89,12 @@ export default function FeedPage() {
     setTimeout(() => setPoppingReaction(null), 400)
   }
 
-  // Sidebar: top 3 receivers by points this month
-  const receiverPoints: Record<string, { points: number; office: string }> = {}
-  for (const p of posts) {
-    if (!receiverPoints[p.to]) receiverPoints[p.to] = { points: 0, office: p.toOffice }
-    receiverPoints[p.to].points += p.points
-  }
-  const top3Receivers = Object.entries(receiverPoints)
-    .sort((a, b) => b[1].points - a[1].points)
+  // Sidebar: top 3 receivers by monthly_points from profiles (full data, not paginated)
+  const top3Receivers = [...profiles]
+    .filter(p => p.monthly_points > 0)
+    .sort((a, b) => b.monthly_points - a.monthly_points)
     .slice(0, 3)
+    .map(p => [p.full_name, { points: p.monthly_points, office: p.office }] as const)
 
   // Sidebar: category breakdown
   const categoryCounts: Record<string, number> = {}

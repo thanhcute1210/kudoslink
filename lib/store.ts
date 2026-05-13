@@ -239,7 +239,7 @@ export const useStore = create<Store>()((set, get) => ({
       .insert({
         from_name: freshUser.full_name,
         from_office: freshUser.office,
-        from_avatar: freshUser.full_name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase(),
+        from_avatar: freshUser.avatar || null,
         from_color: "from-sky-500 to-blue-500",
         to_name: postData.to,
         to_office: postData.toOffice,

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useStore } from "@/lib/store"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { useAuthGuard } from "@/lib/useAuthGuard"
 
 type Evaluation = {
   id: string
@@ -28,6 +29,13 @@ const EVAL_TYPE_LABELS: Record<string, string> = {
   salary_review: "Tăng lương",
 }
 
+const STATUS_VI: Record<string, string> = {
+  draft: "Nháp",
+  submitted: "Chờ phê duyệt",
+  approved: "Đã phê duyệt",
+  rejected: "Từ chối",
+}
+
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-slate-100 text-slate-600",
   submitted: "bg-blue-50 text-blue-700",
@@ -49,6 +57,7 @@ function ScoreBadge({ score }: { score: number }) {
 }
 
 export default function EvaluationListPage() {
+  useAuthGuard()
   const { currentUser, loadUser, profiles, loadProfiles } = useStore()
   const router = useRouter()
   const [evaluations, setEvaluations] = useState<Evaluation[]>([])
@@ -60,7 +69,13 @@ export default function EvaluationListPage() {
   }, [])
 
   useEffect(() => {
-    if (currentUser) loadEvaluations()
+    if (!currentUser) return
+    const allowed = ["manager", "hr", "admin"]
+    if (!allowed.includes(currentUser.role)) {
+      router.replace("/dashboard")
+      return
+    }
+    loadEvaluations()
   }, [currentUser])
 
   async function loadEvaluations() {
@@ -136,7 +151,7 @@ export default function EvaluationListPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{ev.evaluation_period}</span>
                     <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">{EVAL_TYPE_LABELS[ev.evaluation_type] || ev.evaluation_type}</span>
-                    <span className={"rounded-full px-3 py-1 text-xs font-semibold " + (STATUS_COLORS[ev.status] || "bg-slate-100 text-slate-600")}>{ev.status}</span>
+                    <span className={"rounded-full px-3 py-1 text-xs font-semibold " + (STATUS_COLORS[ev.status] || "bg-slate-100 text-slate-600")}>{STATUS_VI[ev.status] || ev.status}</span>
                   </div>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -159,7 +174,15 @@ export default function EvaluationListPage() {
                 </div>
                 <div className="mt-3 flex items-center justify-between">
                   <ScoreBadge score={ev.final_score || 0} />
-                  <span className="text-xs text-slate-400">{new Date(ev.created_at).toLocaleDateString("vi-VN")}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-slate-400">{new Date(ev.created_at).toLocaleDateString("vi-VN")}</span>
+                    <button
+                      onClick={() => router.push(`/evaluation/${ev.id}`)}
+                      className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition"
+                    >
+                      Xem chi tiết →
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
