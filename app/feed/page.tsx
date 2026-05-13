@@ -1,9 +1,10 @@
-"use client"
+﻿"use client"
 import { useState, useEffect } from "react"
 import { useStore } from "@/lib/store"
 import Navbar from "@/components/ui/navbar"
 import { useAuthGuard } from "@/lib/useAuthGuard"
 import { useT } from "@/lib/useT"
+import { supabase } from "@/lib/supabase"
 
 const categoryColor: Record<string, string> = {
   "M&A Support":    "bg-blue-50 text-blue-700 ring-blue-100",
@@ -40,6 +41,7 @@ export default function FeedPage() {
   const t = useT()
   const {
     posts, profiles, currentUser, addReaction, removeReaction,
+    deletePost, editPost,
     loadUser, loadProfiles, loadPosts, loadMorePosts,
     postsHasMore, postsLoading,
     subscribeRealtime, unsubscribeRealtime,
@@ -55,6 +57,36 @@ export default function FeedPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [filterCategory, setFilterCategory] = useState("")
   const [poppingReaction, setPoppingReaction] = useState<string | null>(null)
+  // Post edit/delete state
+  const [postMenu, setPostMenu] = useState<number | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editTitle, setEditTitle] = useState("")
+  const [editMsg, setEditMsg] = useState("")
+  const [editSaving, setEditSaving] = useState(false)
+  const [feedStats, setFeedStats] = useState({ totalPosts: 0, totalPts: 0, latestTime: "" })
+  const [dbCategoryCounts, setDbCategoryCounts] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    // Fetch real aggregate stats from DB (not limited to paginated posts)
+    supabase.from("posts").select("points, time, category", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .then(({ data, count }) => {
+        const rows = data || []
+        const totalPts = rows.reduce((a: number, p: any) => a + (p.points || 0), 0)
+        setFeedStats({
+          totalPosts: count || 0,
+          totalPts,
+          latestTime: rows[0]?.time || "-",
+        })
+        // Category counts from full data
+        const cats: Record<string, number> = {}
+        for (const p of rows) {
+          if (p.category) cats[p.category] = (cats[p.category] || 0) + 1
+        }
+        setDbCategoryCounts(cats)
+      })
+  }, [])
 
   useEffect(() => {
     Promise.all([loadUser(), loadProfiles(), loadPosts(true), loadMyReactions()]).finally(() => setIsLoading(false))
@@ -86,18 +118,14 @@ export default function FeedPage() {
     .slice(0, 3)
     .map(p => [p.full_name, { points: p.monthly_points, office: p.office }] as const)
 
-  // Sidebar: category breakdown
-  const categoryCounts: Record<string, number> = {}
-  for (const p of posts) {
-    categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1
-  }
-  const topCategories = Object.entries(categoryCounts)
+  // Sidebar: category breakdown (from DB — full data, not paginated)
+  const topCategories = Object.entries(dbCategoryCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
   const maxCount = topCategories[0]?.[1] || 1
 
-  // All unique categories for filter bar
-  const allCategories = Object.keys(categoryCounts).sort()
+  // All unique categories for filter bar (from paginated posts for the filter UI)
+  const allCategories = Array.from(new Set(posts.map(p => p.category))).filter(Boolean).sort()
 
   // Filtered posts
   const filteredPosts = filterCategory ? posts.filter(p => p.category === filterCategory) : posts
@@ -196,7 +224,7 @@ export default function FeedPage() {
                     : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50 hover:text-blue-700"
                 )}
               >
-                {cat} ({categoryCounts[cat]})
+                {cat} ({dbCategoryCounts[cat] || 0})
               </button>
             ))}
           </div>
@@ -237,11 +265,13 @@ export default function FeedPage() {
                 <article
                   key={p.id}
                   id={`post-${p.id}`}
-                  className={"animate-fade-in-up relative overflow-hidden rounded-[2rem] border-l-4 border border-white/80 bg-white/90 shadow-xl backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-2xl " + (categoryBorder[p.category] || "border-l-slate-300") + (isForMe ? " ring-2 ring-blue-200 shadow-blue-100/60" : "")}
+                  className={"animate-fade-in-up relative rounded-[2rem] border-l-4 border border-white/80 bg-white/90 shadow-xl backdrop-blur-xl transition hover:-translate-y-1 hover:shadow-2xl " + (categoryBorder[p.category] || "border-l-slate-300") + (isForMe ? " ring-2 ring-blue-200 shadow-blue-100/60" : "")}
                   style={{ animationDelay: `${filteredPosts.indexOf(p) * 60}ms` }}
                 >
-                  {/* Background blob */}
-                  <div className={"absolute -right-20 -top-20 h-52 w-52 rounded-full blur-3xl " + (isForMe ? "bg-blue-200/50" : "bg-slate-100/80")} />
+                  {/* Background blob — wrapped to avoid leaking outside card */}
+                  <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none">
+                    <div className={"absolute -right-20 -top-20 h-52 w-52 rounded-full blur-3xl " + (isForMe ? "bg-blue-200/50" : "bg-slate-100/80")} />
+                  </div>
 
                   {/* Top: points badge strip */}
                   <div className={"flex items-center justify-between px-6 pt-5 pb-4 " + (isForMe ? "bg-gradient-to-r from-blue-50/60 to-transparent" : "")}>
@@ -293,14 +323,81 @@ export default function FeedPage() {
 
                   {/* Body */}
                   <div className="relative px-6 pb-5">
-                    <h3 className="text-base font-bold tracking-tight text-slate-950">{p.title}</h3>
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-base font-bold tracking-tight text-slate-950">{p.title}</h3>
+                      {/* ⋯ Menu for own posts */}
+                      {p.from === currentUser?.full_name && editingId !== p.id && deleteConfirmId !== p.id && (
+                        <div className="relative shrink-0">
+                          <button
+                            onClick={() => setPostMenu(postMenu === p.id ? null : p.id)}
+                            className="rounded-full px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition text-base leading-none"
+                          >⋯</button>
+                          {postMenu === p.id && (
+                            <div className="absolute right-0 top-8 z-30 w-32 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xl">
+                              <button
+                                onClick={() => { setEditingId(p.id); setEditTitle(p.title); setEditMsg(p.message); setPostMenu(null) }}
+                                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700"
+                              >✏️ Sửa</button>
+                              <button
+                                onClick={() => { setDeleteConfirmId(p.id); setPostMenu(null) }}
+                                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+                              >🗑️ Xóa</button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
 
-                    {/* Message as quote */}
-                    <blockquote className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
-                      <p className="text-sm leading-6 text-slate-600 before:content-['“'] before:text-slate-300 before:text-lg before:font-serif after:content-['”'] after:text-slate-300 after:text-lg after:font-serif">
-                        {p.message}
-                      </p>
-                    </blockquote>
+                    {/* Inline edit form */}
+                    {editingId === p.id ? (
+                      <div className="mt-3 space-y-2">
+                        <input
+                          value={editTitle}
+                          onChange={e => setEditTitle(e.target.value)}
+                          className="w-full rounded-xl border border-blue-200 px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-300"
+                          placeholder="Tiêu đề"
+                        />
+                        <textarea
+                          value={editMsg}
+                          onChange={e => setEditMsg(e.target.value)}
+                          rows={3}
+                          className="w-full resize-none rounded-xl border border-blue-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                          placeholder="Nội dung"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={async () => { setEditSaving(true); await editPost(p.id, editTitle, editMsg); setEditSaving(false); setEditingId(null) }}
+                            disabled={editSaving}
+                            className="rounded-full bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+                          >{editSaving ? "Đang lưu..." : "💾 Lưu"}</button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="rounded-full border border-slate-200 px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                          >Huỷ</button>
+                        </div>
+                      </div>
+                    ) : deleteConfirmId === p.id ? (
+                      <div className="mt-3 rounded-2xl bg-red-50 px-4 py-3 ring-1 ring-red-100">
+                        <p className="text-sm font-semibold text-red-700">Xóa bài này? Hành động không thể hoàn tác.</p>
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            onClick={async () => { await deletePost(p.id); setDeleteConfirmId(null) }}
+                            className="rounded-full bg-red-500 px-4 py-1.5 text-xs font-bold text-white hover:bg-red-600"
+                          >Xóa</button>
+                          <button
+                            onClick={() => setDeleteConfirmId(null)}
+                            className="rounded-full border border-slate-200 px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                          >Huỷ</button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Message as quote */
+                      <blockquote className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
+                        <p className="text-sm leading-6 text-slate-600 before:content-['\201C'] before:text-slate-300 before:text-lg before:font-serif after:content-['\201D'] after:text-slate-300 after:text-lg after:font-serif">
+                          {p.message}
+                        </p>
+                      </blockquote>
+                    )}
 
                     {/* Tags row */}
                     <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -385,15 +482,15 @@ export default function FeedPage() {
               <div className="mt-5 space-y-3">
                 <div className="flex items-center justify-between rounded-2xl bg-blue-50 px-4 py-3 ring-1 ring-blue-100">
                   <span className="text-sm font-semibold text-blue-700">{t.feed_total_posts}</span>
-                  <span className="text-lg font-bold text-blue-700">{posts.length}</span>
+                  <span className="text-lg font-bold text-blue-700">{feedStats.totalPosts}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-emerald-50 px-4 py-3 ring-1 ring-emerald-100">
                   <span className="text-sm font-semibold text-emerald-700">{t.feed_pts_given}</span>
-                  <span className="text-lg font-bold text-emerald-700">{posts.reduce((a, p) => a + p.points, 0)}</span>
+                  <span className="text-lg font-bold text-emerald-700">{feedStats.totalPts}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-amber-50 px-4 py-3 ring-1 ring-amber-100">
                   <span className="text-sm font-semibold text-amber-700">{t.feed_latest}</span>
-                  <span className="text-sm font-bold text-amber-700">{posts[0]?.time || "-"}</span>
+                  <span className="text-sm font-bold text-amber-700">{feedStats.latestTime}</span>
                 </div>
               </div>
             </div>

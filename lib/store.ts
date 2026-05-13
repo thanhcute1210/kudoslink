@@ -77,6 +77,8 @@ type Store = {
   loadPosts: (reset?: boolean) => Promise<void>
   loadMorePosts: () => Promise<void>
   addPost: (post: Omit<Post, "id" | "time" | "reactions">) => Promise<void>
+  deletePost: (postId: number) => Promise<void>
+  editPost: (postId: number, title: string, message: string) => Promise<void>
   addReaction: (postId: number, emoji: string) => Promise<void>
   removeReaction: (postId: number, emoji: string) => Promise<void>
 
@@ -309,10 +311,34 @@ export const useStore = create<Store>()((set, get) => ({
         points: postData.points,
         title: postData.title,
       })
+
+      // Send email notification via Edge Function (requires RESEND_API_KEY env var in Supabase)
+      if (receiverProfile.email) {
+        supabase.functions.invoke("notify-kudos", {
+          body: {
+            to_email: receiverProfile.email,
+            to_name: receiverProfile.full_name,
+            from_name: freshUser.full_name,
+            points: postData.points,
+            title: postData.title,
+            message: postData.message,
+          },
+        }).catch(() => { /* email failure is non-blocking */ })
+      }
     }
 
     await get().loadUser()
     await get().loadProfiles()
+  },
+
+  deletePost: async (postId) => {
+    await supabase.from("posts").delete().eq("id", postId)
+    set({ posts: get().posts.filter(p => p.id !== postId) })
+  },
+
+  editPost: async (postId, title, message) => {
+    await supabase.from("posts").update({ title, message }).eq("id", postId)
+    set({ posts: get().posts.map(p => p.id === postId ? { ...p, title, message } : p) })
   },
 
   myReactions: {},
