@@ -80,6 +80,10 @@ type Store = {
   addReaction: (postId: number, emoji: string) => Promise<void>
   removeReaction: (postId: number, emoji: string) => Promise<void>
 
+  // Per-user reactions from DB: postId → emoji[]
+  myReactions: Record<string, string[]>
+  loadMyReactions: () => Promise<void>
+
   companyValues: CompanyValue[]
   loadCompanyValues: () => Promise<void>
 
@@ -165,8 +169,9 @@ export const useStore = create<Store>()((set, get) => ({
         isLoggedIn: true,
         myBudget: profile.giving_budget_monthly ?? 300,
       })
-      // Load notifications in background
+      // Load notifications and reactions in background
       get().loadNotifications()
+      get().loadMyReactions()
     }
   },
 
@@ -310,22 +315,77 @@ export const useStore = create<Store>()((set, get) => ({
     await get().loadProfiles()
   },
 
+  myReactions: {},
+
+  loadMyReactions: async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase
+      .from("post_reactions")
+      .select("post_id, emoji")
+      .eq("user_id", user.id)
+    if (data) {
+      const map: Record<string, string[]> = {}
+      for (const r of data) {
+        const key = String(r.post_id)
+        if (!map[key]) map[key] = []
+        map[key].push(r.emoji)
+      }
+      set({ myReactions: map })
+    }
+  },
+
   addReaction: async (postId, emoji) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
     const post = get().posts.find(p => p.id === postId)
     if (!post) return
+
+    // Insert into post_reactions (ignore if duplicate)
+    await supabase.from("post_reactions").upsert(
+      { post_id: postId, user_id: user.id, emoji },
+      { onConflict: "post_id,user_id,emoji", ignoreDuplicates: true }
+    )
+
+    // Update aggregated count on posts table
     const newReactions = { ...post.reactions, [emoji]: (post.reactions[emoji] || 0) + 1 }
     await supabase.from("posts").update({ reactions: newReactions }).eq("id", postId)
-    set({ posts: get().posts.map(p => p.id === postId ? { ...p, reactions: newReactions } : p) })
+
+    // Update local state
+    const key = String(postId)
+    const prevMine = get().myReactions[key] || []
+    set({
+      posts: get().posts.map(p => p.id === postId ? { ...p, reactions: newReactions } : p),
+      myReactions: { ...get().myReactions, [key]: [...prevMine, emoji] },
+    })
   },
 
   removeReaction: async (postId, emoji) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
     const post = get().posts.find(p => p.id === postId)
     if (!post) return
+
+    // Delete from post_reactions
+    await supabase.from("post_reactions")
+      .delete()
+      .eq("post_id", postId)
+      .eq("user_id", user.id)
+      .eq("emoji", emoji)
+
+    // Update aggregated count
     const newReactions = { ...post.reactions }
     newReactions[emoji] = Math.max(0, (newReactions[emoji] || 0) - 1)
     if (newReactions[emoji] === 0) delete newReactions[emoji]
     await supabase.from("posts").update({ reactions: newReactions }).eq("id", postId)
-    set({ posts: get().posts.map(p => p.id === postId ? { ...p, reactions: newReactions } : p) })
+
+    // Update local state
+    const key = String(postId)
+    const prevMine = get().myReactions[key] || []
+    set({
+      posts: get().posts.map(p => p.id === postId ? { ...p, reactions: newReactions } : p),
+      myReactions: { ...get().myReactions, [key]: prevMine.filter(e => e !== emoji) },
+    })
   },
 
   companyValues: [],

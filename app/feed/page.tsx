@@ -44,12 +44,12 @@ export default function FeedPage() {
     postsHasMore, postsLoading,
     subscribeRealtime, unsubscribeRealtime,
     newPostsAvailable, dismissNewPosts,
+    myReactions, loadMyReactions,
   } = useStore()
 
   function getProfileAvatar(name: string): string | undefined {
     return profiles.find(p => p.full_name === name)?.avatar ?? undefined
   }
-  const [myReactions, setMyReactions] = useState<Record<string, string[]>>({})
   const [showPicker, setShowPicker] = useState<number | null>(null)
   const [toast, setToast] = useState("")
   const [isLoading, setIsLoading] = useState(true)
@@ -57,11 +57,7 @@ export default function FeedPage() {
   const [poppingReaction, setPoppingReaction] = useState<string | null>(null)
 
   useEffect(() => {
-    const saved = localStorage.getItem("kudoslink_reactions")
-    if (saved) {
-      try { setMyReactions(JSON.parse(saved)) } catch {}
-    }
-    Promise.all([loadUser(), loadProfiles(), loadPosts(true)]).finally(() => setIsLoading(false))
+    Promise.all([loadUser(), loadProfiles(), loadPosts(true), loadMyReactions()]).finally(() => setIsLoading(false))
     subscribeRealtime()
     return () => unsubscribeRealtime()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,20 +66,14 @@ export default function FeedPage() {
   function handleReact(postId: number, emoji: string) {
     const key = String(postId)
     const already = myReactions[key] || []
-    let next: Record<string, string[]>
     if (already.includes(emoji)) {
       removeReaction(postId, emoji)
-      next = { ...myReactions, [key]: already.filter(e => e !== emoji) }
     } else {
       addReaction(postId, emoji)
-      next = { ...myReactions, [key]: [...already, emoji] }
       setToast(t.feed_reaction_added)
       setTimeout(() => setToast(""), 2000)
     }
-    setMyReactions(next)
-    localStorage.setItem("kudoslink_reactions", JSON.stringify(next))
     setShowPicker(null)
-    // pop animation
     const popKey = `${postId}-${emoji}`
     setPoppingReaction(popKey)
     setTimeout(() => setPoppingReaction(null), 400)

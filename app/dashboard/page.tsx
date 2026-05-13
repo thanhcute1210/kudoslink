@@ -37,13 +37,17 @@ function getColor(index: number): string {
 
 export default function DashboardPage() {
   useAuthGuard()
-  const { currentUser, profiles, posts, loadUser, loadProfiles, loadPosts, myBudget, updateAvatar } = useStore()
+  const { currentUser, profiles, loadUser, loadProfiles, myBudget, updateAvatar } = useStore()
   const [isLoading, setIsLoading] = useState(true)
   const [barsMounted, setBarsMounted] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const t = useT()
+
+  // Load full post history from DB (not limited to 20)
+  const [postsReceived, setPostsReceived] = useState<any[]>([])
+  const [postsSent, setPostsSent] = useState<any[]>([])
 
   // Password change state
   const [showPwForm, setShowPwForm] = useState(false)
@@ -85,18 +89,27 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    Promise.all([loadUser(), loadProfiles(), loadPosts()]).finally(() => {
+    Promise.all([loadUser(), loadProfiles()]).finally(() => {
       setIsLoading(false)
       setTimeout(() => setBarsMounted(true), 100)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Once currentUser is ready, load their full post history
+  useEffect(() => {
+    if (!currentUser?.full_name) return
+    supabase.from("posts").select("*").eq("to_name", currentUser.full_name)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setPostsReceived(data || []))
+    supabase.from("posts").select("*").eq("from_name", currentUser.full_name)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setPostsSent(data || []))
+  }, [currentUser?.full_name])
+
   const myRank = [...profiles].sort((a, b) => b.points - a.points).findIndex(p => p.id === currentUser?.id) + 1
   const budgetLeft = myBudget - (currentUser?.budget_used || 0)
   const budgetPercent = Math.min(((currentUser?.budget_used || 0) / myBudget) * 100, 100)
-  const postsReceived = posts.filter(p => p.to === currentUser?.full_name)
-  const postsSent = posts.filter(p => p.from === currentUser?.full_name)
   const { current: badge, next: nextBadge, progress: badgeProgress } = getBadgeInfo(currentUser?.points || 0)
 
   const animatedPoints = useCountUp(isLoading ? 0 : (currentUser?.points || 0))
@@ -296,18 +309,21 @@ export default function DashboardPage() {
                 )}
                 {postsReceived.map((p) => (
                   <a key={p.id} href={`/feed#post-${p.id}`} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm transition hover:shadow-md hover:border-blue-200 hover:bg-blue-50/50 group">
-                    <div className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white " + p.fromColor}>
-                      {p.fromAvatar}
-                    </div>
+                    {p.from_avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.from_avatar} alt={p.from_name} className="h-10 w-10 shrink-0 rounded-full object-cover" />
+                    ) : (
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 text-xs font-bold text-white">
+                        {getInitials(p.from_name || "?")}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-slate-950 group-hover:text-blue-700 transition-colors">{p.from}</div>
+                      <div className="text-sm font-bold text-slate-950 group-hover:text-blue-700 transition-colors">{p.from_name}</div>
                       <div className="text-xs text-slate-500 truncate">{p.title}</div>
-                      <div className="mt-0.5 text-xs text-slate-400">{p.time}</div>
+                      <div className="mt-0.5 text-xs text-slate-400">{new Date(p.created_at).toLocaleDateString("vi-VN")}</div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <div className="rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-700">
-                        +{p.points}pts
-                      </div>
+                      <div className="rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-700">+{p.points}pts</div>
                       <span className="text-slate-300 group-hover:text-blue-400 transition-colors text-sm">→</span>
                     </div>
                   </a>
@@ -334,18 +350,16 @@ export default function DashboardPage() {
                 )}
                 {postsSent.map((p) => (
                   <a key={p.id} href={`/feed#post-${p.id}`} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm transition hover:shadow-md hover:border-emerald-200 hover:bg-emerald-50/50 group">
-                    <div className={"flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white " + p.fromColor}>
-                      {getInitials(p.to)}
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-xs font-bold text-white">
+                      {getInitials(p.to_name || "?")}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-slate-950 group-hover:text-emerald-700 transition-colors">{p.to}</div>
+                      <div className="text-sm font-bold text-slate-950 group-hover:text-emerald-700 transition-colors">{p.to_name}</div>
                       <div className="text-xs text-slate-500 truncate">{p.title}</div>
-                      <div className="mt-0.5 text-xs text-slate-400">{p.time}</div>
+                      <div className="mt-0.5 text-xs text-slate-400">{new Date(p.created_at).toLocaleDateString("vi-VN")}</div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <div className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-bold text-emerald-700">
-                        +{p.points}pts
-                      </div>
+                      <div className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-bold text-emerald-700">+{p.points}pts</div>
                       <span className="text-slate-300 group-hover:text-emerald-400 transition-colors text-sm">→</span>
                     </div>
                   </a>
