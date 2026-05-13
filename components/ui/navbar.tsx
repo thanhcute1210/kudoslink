@@ -93,8 +93,8 @@ export default function Navbar() {
     { href: "/feed",        label: t.nav_feed },
     { href: "/leaderboard", label: t.nav_dashboard },
     { href: "/dashboard",   label: t.nav_mypage },
-    { href: "/evaluation",  label: "📋 Đánh giá",   roles: ["manager", "hr", "admin"] },
-    { href: "/admin/users", label: "⚙️ Quản trị",   roles: ["admin", "hr"] },
+    { href: "/evaluation",  label: t.nav_evaluation, roles: ["manager", "hr", "admin"] },
+    { href: "/admin/users", label: t.nav_admin,       roles: ["admin", "hr"] },
   ]
 
   const visibleNavLinks = navLinks.filter(l =>
