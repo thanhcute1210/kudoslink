@@ -52,7 +52,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     if (!currentUser) return
-    if (currentUser.role !== "admin" && currentUser.role !== "hr") {
+    if (currentUser.role !== "admin") {
       router.replace("/dashboard")
       return
     }

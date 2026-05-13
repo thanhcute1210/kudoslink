@@ -94,7 +94,7 @@ export default function Navbar() {
     { href: "/leaderboard", label: t.nav_dashboard },
     { href: "/dashboard",   label: t.nav_mypage },
     { href: "/evaluation",  label: t.nav_evaluation, roles: ["manager", "hr", "admin"] },
-    { href: "/admin/users", label: t.nav_admin,       roles: ["admin", "hr"] },
+    { href: "/admin/users", label: t.nav_admin,       roles: ["admin"] },
   ]
 
   const visibleNavLinks = navLinks.filter(l =>
